@@ -18,7 +18,7 @@
     .row{display:grid;gap:12px}
     @media(min-width:800px){ .cols-2{grid-template-columns:1fr 2fr} }
     .actions{display:flex;flex-wrap:wrap;gap:8px}
-    .btn{border:1px solid #d9dde5;background:#f7f9fc;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600}
+    .btn{border:1px solid #d9dde5;background:#f7f9fc;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600;text-decoration:none;color:inherit}
     .btn.primary{background:#e8f1ff;border-color:#cde0ff}
     .hint{font-size:12px;color:var(--muted)}
     .qrWrap{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
@@ -47,7 +47,8 @@
         <h1>QR code for your Student Rider Log</h1>
         <div class="actions">
           <button id="btnPrint" class="btn">Print flyer</button>
-          <a id="btnDownload" class="btn primary" download="student-rider-qr.png">Download QR PNG</a>
+          <a id="btnDownloadPng" class="btn primary" download="student-rider-qr.png">Download PNG</a>
+          <a id="btnDownloadSvg" class="btn" download="student-rider-qr.svg">Download SVG</a>
         </div>
       </div>
       <div class="body">
@@ -77,6 +78,7 @@
             <div class="url" id="fUrl"></div>
           </div>
         </div>
+        <div class="hint">Powered by QuickChart QR API (<code>https://quickchart.io/qr</code>).</div>
       </div>
     </div>
   </div>
@@ -87,7 +89,8 @@
   const qrImg = document.getElementById('qr');
   const fQrImg = document.getElementById('fQr');
   const caption = document.getElementById('caption');
-  const btnDownload = document.getElementById('btnDownload');
+  const btnDownloadPng = document.getElementById('btnDownloadPng');
+  const btnDownloadSvg = document.getElementById('btnDownloadSvg');
   const btnPrint = document.getElementById('btnPrint');
   const titleInput = document.getElementById('title');
   const fTitle = document.getElementById('fTitle');
@@ -106,27 +109,39 @@
     return "";
   }
 
-  function buildQrUrl(link){
-    const base = 'https://chart.googleapis.com/chart';
+  // QuickChart QR endpoint (PNG or SVG)
+  function qrPngUrl(link){
     const params = new URLSearchParams({
-      cht: 'qr',
-      chs: `${size}x${size}`,
-      chld: 'M|0',
-      chl: link || ''
+      text: link || '',
+      size: String(size),
+      margin: '4',
+      ecLevel: 'M'
     });
-    return `${base}?${params.toString()}`;
+    return `https://quickchart.io/qr?${params.toString()}`;
+  }
+  function qrSvgUrl(link){
+    const params = new URLSearchParams({
+      text: link || '',
+      format: 'svg',
+      size: String(size),
+      margin: '4',
+      ecLevel: 'M'
+    });
+    return `https://quickchart.io/qr?${params.toString()}`;
   }
 
   function update(){
     const link = urlInput.value.trim();
     const title = titleInput.value.trim() || 'Student Rider Log';
     fTitle.textContent = title;
-    const qrUrl = buildQrUrl(link);
-    qrImg.src = qrUrl;
-    fQrImg.src = qrUrl;
+    const png = qrPngUrl(link);
+    const svg = qrSvgUrl(link);
+    qrImg.src = png;
+    fQrImg.src = png;
     caption.textContent = link;
     fUrl.textContent = link;
-    btnDownload.href = qrUrl;
+    btnDownloadPng.href = png;
+    btnDownloadSvg.href = svg;
   }
 
   const g = guessSiteUrl();
