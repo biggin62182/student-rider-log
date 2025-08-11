@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QR • Student Rider Log</title>
+  <style>
+    :root{ --ink:#111; --muted:#666; --primary:#1b84ff; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;color:var(--ink);}
+    .wrap{max-width:900px;margin:24px auto;padding:0 16px;}
+    .card{border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.06);overflow:hidden;background:#fff;}
+    .head{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    h1{font-size:18px;margin:0}
+    .body{padding:18px 20px;display:grid;gap:16px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d9dde5;font:inherit}
+    .row{display:grid;gap:12px}
+    @media(min-width:800px){ .cols-2{grid-template-columns:1fr 2fr} }
+    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    .btn{border:1px solid #d9dde5;background:#f7f9fc;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600}
+    .btn.primary{background:#e8f1ff;border-color:#cde0ff}
+    .hint{font-size:12px;color:var(--muted)}
+    .qrWrap{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+    .qrBox{border:1px dashed #c7cedb;border-radius:12px;padding:12px;display:inline-block;background:#fff}
+    .big{width:320px;height:320px;object-fit:contain;background:#fff}
+    .caption{font-size:14px;margin-top:6px;word-break:break-all}
+    .flyer{border:1px solid #e5e7eb;border-radius:12px;padding:14px}
+    .flyer h2{margin:0 0 8px}
+    .flyer .subtitle{color:var(--muted);margin:0 0 12px}
+    .flyer .qrBox{display:block;margin:10px auto;text-align:center}
+    .flyer .qrBox img{width:380px;height:380px}
+    .flyer .url{margin-top:10px;text-align:center;font-weight:700}
+    @media print{
+      body{color:#000}
+      .wrap>*:not(.flyer){display:none !important}
+      .flyer{border:none;box-shadow:none;padding:0;margin:0}
+      .flyer .qrBox img{width:520px;height:520px}
+      @page{size:letter portrait;margin:.5in}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <h1>QR code for your Student Rider Log</h1>
+        <div class="actions">
+          <button id="btnPrint" class="btn">Print flyer</button>
+          <a id="btnDownload" class="btn primary" download="student-rider-qr.png">Download QR PNG</a>
+        </div>
+      </div>
+      <div class="body">
+        <div class="row cols-2">
+          <div>
+            <label for="title">Flyer title</label>
+            <input id="title" value="Student Rider Log" />
+          </div>
+          <div>
+            <label for="url">Link to share</label>
+            <input id="url" placeholder="https://YOUR-USERNAME.github.io/student-rider-log/" />
+            <div class="hint">Tip: If you opened this from your GitHub Pages site, the link should auto-fill.</div>
+          </div>
+        </div>
+
+        <div class="qrWrap">
+          <div class="qrBox">
+            <img id="qr" class="big" alt="QR code" />
+            <div class="caption" id="caption"></div>
+          </div>
+          <div class="flyer" id="flyer">
+            <h2 id="fTitle">Student Rider Log</h2>
+            <p class="subtitle">Scan to open on your phone</p>
+            <div class="qrBox">
+              <img id="fQr" alt="QR code" />
+            </div>
+            <div class="url" id="fUrl"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const urlInput = document.getElementById('url');
+  const qrImg = document.getElementById('qr');
+  const fQrImg = document.getElementById('fQr');
+  const caption = document.getElementById('caption');
+  const btnDownload = document.getElementById('btnDownload');
+  const btnPrint = document.getElementById('btnPrint');
+  const titleInput = document.getElementById('title');
+  const fTitle = document.getElementById('fTitle');
+  const fUrl = document.getElementById('fUrl');
+  const size = 800; // high-res QR
+
+  function guessSiteUrl(){
+    try{
+      const u = new URL(window.location.href);
+      const parts = u.pathname.split('/').filter(Boolean);
+      if(u.hostname.endsWith('github.io') && parts.length >= 2){
+        return `${u.origin}/${parts[0]}/`;
+      }
+      return `${u.origin}${u.pathname.replace(/\/[^\/]*$/, '/')}`;
+    }catch(e){}
+    return "";
+  }
+
+  function buildQrUrl(link){
+    const base = 'https://chart.googleapis.com/chart';
+    const params = new URLSearchParams({
+      cht: 'qr',
+      chs: `${size}x${size}`,
+      chld: 'M|0',
+      chl: link || ''
+    });
+    return `${base}?${params.toString()}`;
+  }
+
+  function update(){
+    const link = urlInput.value.trim();
+    const title = titleInput.value.trim() || 'Student Rider Log';
+    fTitle.textContent = title;
+    const qrUrl = buildQrUrl(link);
+    qrImg.src = qrUrl;
+    fQrImg.src = qrUrl;
+    caption.textContent = link;
+    fUrl.textContent = link;
+    btnDownload.href = qrUrl;
+  }
+
+  const g = guessSiteUrl();
+  if(g && (!urlInput.value || urlInput.value.startsWith('http')===false)){
+    urlInput.value = g;
+  }
+  update();
+
+  urlInput.addEventListener('input', update);
+  titleInput.addEventListener('input', update);
+  btnPrint.addEventListener('click', ()=> window.print());
+})();
+</script>
+</body>
+</html>
