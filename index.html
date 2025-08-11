@@ -17,9 +17,29 @@
     .btn{padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(122,193,255,.15);cursor:pointer;font-weight:700;font-size:13px}
     .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}
     .btn.help{background:rgba(255, 231, 92, .22); border-color: rgba(255, 231, 92, .35)}
+
+    /* WEEK GRID */
+    .weekWrap{position:relative}
+    .week-hint{display:none;font-size:12px;color:var(--muted);margin-top:6px}
     .week-grid{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(160px,1fr));}
     .dayCard{padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);}
     .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+    /* Make week grid horizontally scrollable on small screens */
+    @media (max-width: 779px){
+      .week-grid{
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(220px, 85%);
+        grid-template-columns: unset;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+      }
+      .dayCard{ scroll-snap-align: start; }
+      .week-hint{ display:block; }
+    }
+
     .submissions{margin-top:22px;}
     table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02);min-width:1100px;}
     thead th{font-size:12.5px;color:var(--muted);padding:8px 10px;background:rgba(0,0,0,.25);text-align:left;white-space:nowrap;}
@@ -124,7 +144,10 @@
 
         <fieldset>
           <legend class="dim">Weekly ride log: Rode, NS (no show), Sick, Car Rider, No School</legend>
-          <div id="daysContainer" class="week-grid"></div>
+          <div class="weekWrap">
+            <div id="daysContainer" class="week-grid"></div>
+            <div class="week-hint">Swipe to see all days →</div>
+          </div>
           <template id="optionTemplate">
             <option value="">—</option>
             <option>Rode</option>
