@@ -13,7 +13,7 @@
     .grid{display:grid;gap:12px;} @media(min-width:780px){ .cols-2{grid-template-columns:1fr 1fr;} .cols-3{grid-template-columns:repeat(3,1fr);} }
     label{display:block;font-size:14px;margin:0 0 6px;color:var(--muted);}
     input,select,button{font:inherit;color:var(--ink);} input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(15,17,23,.85);outline:none;}
-    .toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);}
+    .toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);flex-wrap:wrap;}
     .btn{padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(122,193,255,.15);cursor:pointer;font-weight:700;font-size:13px}
     .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}
     .btn.help{background:rgba(255, 231, 92, .22); border-color: rgba(255, 231, 92, .35)}
@@ -168,6 +168,7 @@
         </fieldset>
 
         <div class="toolbar">
+          <button type="button" class="btn secondary" id="btnNew">New entry</button>
           <button type="reset" class="btn secondary">Reset</button>
           <button type="submit" class="btn" id="btnSave">Save entry</button>
         </div>
@@ -273,6 +274,7 @@
       const btnExport = document.getElementById("btnExport");
       const btnImport = document.getElementById("btnImport");
       const importFile = document.getElementById("importFile");
+      const btnNew = document.getElementById("btnNew");
 
       const streetInput = document.getElementById("street");
       const street2Input = document.getElementById("street2");
@@ -359,6 +361,7 @@
 
       function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || "[]"); }catch{ return []; } }
       function save(all){ localStorage.setItem(KEY, JSON.stringify(all)); }
+      function genId(){ return (crypto?.randomUUID? crypto.randomUUID(): (Date.now().toString(36)+Math.random().toString(36).slice(2))); }
 
       function fmtAddress(r){
         const l2 = r.street2 ? (", " + r.street2) : "";
@@ -391,7 +394,18 @@
           .trim();
       }
 
-      // Save / Update
+      // New Entry button clears ID and fields
+      btnNew?.addEventListener("click", ()=>{
+        form.reset();
+        recordIdInput.value = "";
+        renderDefaultWeekOf();
+        updateDayLabels();
+        // keep driverName preference
+        if(loadPrefs().driverName) document.getElementById("driverName").value = loadPrefs().driverName;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // Save / Update with smart "save as new" when student/week changed
       form.addEventListener("submit", (ev)=>{
         ev.preventDefault();
         const week = {
@@ -406,8 +420,8 @@
           friAm: document.getElementById("friAm").value,
           friPm: document.getElementById("friPm").value
         };
-        const record = {
-          id: recordIdInput.value || (crypto?.randomUUID? crypto.randomUUID(): (Date.now().toString(36)+Math.random().toString(36).slice(2))),
+        const draft = {
+          id: recordIdInput.value || "",
           weekOf: document.getElementById("weekOf").value,
           studentName: document.getElementById("studentName").value.trim(),
           street: document.getElementById("street").value.trim(),
@@ -421,13 +435,21 @@
           week,
           savedAt: new Date().toISOString()
         };
+
         const all = load();
-        const idx = all.findIndex(r=> r.id===record.id);
-        if(idx>=0){ all[idx]=record; } else { all.unshift(record); }
+        const original = all.find(r => r.id === draft.id);
+        // If editing but Student or Week changed, treat as NEW entry
+        if (original && (original.studentName !== draft.studentName || original.weekOf !== draft.weekOf)) {
+          draft.id = "";
+        }
+        const rec = { ...draft, id: draft.id || genId() };
+
+        const idx = all.findIndex(r=> r.id===rec.id);
+        if(idx>=0){ all[idx]=rec; } else { all.unshift(rec); }
         save(all);
         render();
-        recordIdInput.value = record.id;
-        alert("Saved. You can keep filling the week, or print a PDF.");
+        recordIdInput.value = rec.id;
+        alert("Saved. You can keep filling the week, or start a New entry for another student.");
       });
 
       // Printable (weekly) cards
@@ -477,6 +499,7 @@
       }
       function printRecords(records){
         if(!records || !records.length){ alert("Nothing to print."); return; }
+        const printArea = document.getElementById("printArea");
         printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeReportCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
         setTimeout(()=>window.print(), 10);
       }
@@ -513,7 +536,7 @@
         const s = new Date(base); s.setDate(s.getDate() - s.getDay()); s.setDate(s.getDate()+7); // next Sunday
         const weekOf = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
         const blankWeek = { monAm:"",monPm:"",tueAm:"",tuePm:"",wedAm:"",wedPm:"",thuAm:"",thuPm:"",friAm:"",friPm:"" };
-        const newRec = { ...r, id: (crypto?.randomUUID? crypto.randomUUID(): (Date.now().toString(36)+Math.random().toString(36).slice(2)) ), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
+        const newRec = { ...r, id: genId(), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
         const all = load(); all.unshift(newRec); save(all); render(); enterEditMode(newRec);
       }
       function render(){
@@ -597,14 +620,13 @@
       qpDup.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); duplicateToNextWeek(r); });
 
       // ---- Monthly Calendar Grid (per student) ----
-      function monthName(y, m0){ return new Date(y, m0, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" }); }
       function parseMonthStr(monthStr){
         let y, m0;
         if(monthStr && /^\d{4}-\d{2}$/.test(monthStr)){
           y = parseInt(monthStr.slice(0,4),10);
           m0 = parseInt(monthStr.slice(5,7),10) - 1;
         }else{
-        const now = new Date(); y = now.getFullYear(); m0 = now.getMonth();
+          const now = new Date(); y = now.getFullYear(); m0 = now.getMonth();
         }
         return { y, m0 };
       }
@@ -617,6 +639,7 @@
         while(d <= gridEnd){ days.push(new Date(d)); d.setDate(d.getDate()+1); }
         return { first, last, gridStart, gridEnd, days };
       }
+      function toIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
       function monthlyDataForStudent(y, m0, student){
         const byDate = new Map(); // "YYYY-MM-DD" -> { am, pm, savedAt }
         const rows = load().filter(r=> r.studentName === student);
@@ -624,9 +647,8 @@
           const dd = getDayDatesFromWeekOf(r.weekOf || "");
           const w = r.week || {};
           const savedAt = r.savedAt || "";
-          [["mon","Monday"],["tue","Tuesday"],["wed","Wednesday"],["thu","Thursday"],["fri","Friday"]].forEach(([k,label])=>{
-            const iso = dd[k];
-            if(!iso) return;
+          [["mon"],["tue"],["wed"],["thu"],["fri"]].forEach(([k])=>{
+            const iso = dd[k]; if(!iso) return;
             const d = new Date(iso);
             if(d.getFullYear() !== y || d.getMonth() !== m0) return;
             const am = getWeekVal(w, k, "Am");
@@ -688,7 +710,7 @@
           const tr = document.createElement('tr');
           for(let j=0; j<7; j++){
             const d = gridDays[i+j];
-            const iso = toInputDate(d);
+            const iso = toIso(d);
             const td = document.createElement('td');
             const header = document.createElement('div'); header.className='dayHeader' + (d.getMonth()!==m0?' muted':''); 
             header.innerHTML = `<span>${d.getDate()}</span>`;
@@ -728,6 +750,7 @@
         if(driverName){ savePrefs({ ...(loadPrefs()||{}), driverName }); }
         const card = makeMonthlyCalendarForStudent(monthStr, student, driverName);
         if(!card) return;
+        const printArea = document.getElementById("printArea");
         printArea.innerHTML = "";
         printArea.appendChild(card);
         setTimeout(()=>window.print(), 10);
