@@ -18,26 +18,38 @@
     .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}
     .btn.help{background:rgba(255, 231, 92, .22); border-color: rgba(255, 231, 92, .35)}
 
-    /* WEEK GRID */
+    /* WEEK GRID (default: 5 columns on desktop) */
     .weekWrap{position:relative}
     .week-hint{display:none;font-size:12px;color:var(--muted);margin-top:6px}
     .week-grid{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(160px,1fr));}
     .dayCard{padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);}
     .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
-    /* Make week grid horizontally scrollable on small screens */
-    @media (max-width: 779px){
+    /* Make week grid horizontally scrollable on small screens (robust) */
+    @media (max-width: 820px){
       .week-grid{
-        grid-auto-flow: column;
-        grid-auto-columns: minmax(220px, 85%);
-        grid-template-columns: unset;
-        overflow-x: auto;
-        padding-bottom: 8px;
+        display:flex;
+        gap:10px;
+        overflow-x:auto;
+        padding: 4px 2px 8px;
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
+        touch-action: pan-x;
+        overscroll-behavior-inline: contain;
       }
-      .dayCard{ scroll-snap-align: start; }
+      .dayCard{
+        flex: 0 0 260px;
+        min-width: 260px;
+        scroll-snap-align: start;
+      }
       .week-hint{ display:block; }
+      .weekWrap::before, .weekWrap::after{
+        content:"";
+        position:absolute; top:0; bottom:0; width:18px; pointer-events:none;
+        background:linear-gradient(to right, rgba(11,12,16,1), rgba(11,12,16,0));
+      }
+      .weekWrap::after{ right:0; transform:scaleX(-1); }
+      .weekWrap::before{ left:0; }
     }
 
     .submissions{margin-top:22px;}
@@ -145,8 +157,8 @@
         <fieldset>
           <legend class="dim">Weekly ride log: Rode, NS (no show), Sick, Car Rider, No School</legend>
           <div class="weekWrap">
-            <div id="daysContainer" class="week-grid"></div>
-            <div class="week-hint">Swipe to see all days →</div>
+            <div id="daysContainer" class="week-grid" tabindex="0" aria-label="Swipe or drag to scroll days"></div>
+            <div class="week-hint">Swipe or drag sideways to see all days →</div>
           </div>
           <template id="optionTemplate">
             <option value="">—</option>
@@ -569,7 +581,7 @@
             const w=r.week||{};
             [
               getWeekVal(w,'mon','Am'), getWeekVal(w,'mon','Pm'),
-              getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm'),
+              getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm'],
               getWeekVal(w,'wed','Am'), getWeekVal(w,'wed','Pm'),
               getWeekVal(w,'thu','Am'), getWeekVal(w,'thu','Pm'),
               getWeekVal(w,'fri','Am'), getWeekVal(w,'fri','Pm')
@@ -641,7 +653,7 @@
       }
       function toIso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
       function monthlyDataForStudent(y, m0, student){
-        const byDate = new Map(); // "YYYY-MM-DD" -> { am, pm, savedAt }
+        const byDate = new Map();
         const rows = load().filter(r=> r.studentName === student);
         rows.forEach(r=>{
           const dd = getDayDatesFromWeekOf(r.weekOf || "");
@@ -684,7 +696,6 @@
         const meta = document.createElement('div'); meta.className='meta'; meta.textContent= new Date(y, m0, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
         head.appendChild(h1); head.appendChild(meta); wrap.appendChild(head);
 
-        // Rider info above calendar
         const infoBox = document.createElement('div'); infoBox.className='studentInfo';
         const title = document.createElement('div'); title.className='studentInfoTitle'; title.textContent='Rider Information';
         infoBox.appendChild(title);
@@ -694,10 +705,9 @@
         addRow('Home District', infoRec.homeDistrict||"");
         addRow('Attending District', infoRec.schoolDistrict||"");
         addRow('School Attending', infoRec.schoolName||"");
-        addRow('Address', infoRec.street? `${infoRec.street}${infoRec.street2?(", "+infoRec.street2):""}, ${infoRec.city||""}, ${infoRec.state||""} ${infoRec.zip||""}` : "");
+        addRow('Address', infoRec.street? f`${infoRec.street}${infoRec.street2?(", "+infoRec.street2):""}, ${infoRec.city||""}, ${infoRec.state||""} ${infoRec.zip||""}` : "");
         infoBox.appendChild(grid); wrap.appendChild(infoBox);
 
-        // Calendar grid
         const table = document.createElement('table'); table.className='calendar';
         const thead = document.createElement('thead');
         const trh = document.createElement('tr');
@@ -731,7 +741,6 @@
         table.appendChild(tbodyCal);
         wrap.appendChild(table);
 
-        // Signature + Date lines (auto-fill)
         const sig = document.createElement('div'); sig.className='signatureBlock';
         const today = new Date().toLocaleDateString();
         sig.innerHTML = `
@@ -756,7 +765,6 @@
         setTimeout(()=>window.print(), 10);
       });
 
-      // ---------- Export / Import ----------
       function download(filename, text){
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([text], {type:'application/json'}));
@@ -815,85 +823,39 @@
         importFile.value = "";
       });
 
-      // ---------- Help Window ----------
       function openHelp(){
         const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=800");
         if(!w){ alert("Pop-up blocked. Please allow pop-ups for this page to view Help."); return; }
-        const css = `
-          body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;padding:20px;color:#111;max-width:900px;margin:0 auto;}
-          h1{margin:0 0 12px;font-size:22px}
-          h2{margin:18px 0 8px;font-size:18px;border-bottom:1px solid #eee;padding-bottom:4px}
-          ol,ul{padding-left:20px}
-          code, .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:#f3f3f3;border-radius:6px;padding:1px 6px}
-          .note{color:#444;background:#fff8d8;border:1px solid #f0e2a0;border-radius:8px;padding:8px 10px;margin:8px 0}
-          .tip{color:#155724;background:#e6ffed;border:1px solid #b7f5c5;border-radius:8px;padding:8px 10px;margin:8px 0}
-          .muted{color:#666}
-          @media print{ body{color:#000} .note,.tip{border-color:#aaa} }
-        `;
+        const css = `body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;padding:20px;color:#111;max-width:900px;margin:0 auto;}h1{margin:0 0 12px;font-size:22px}h2{margin:18px 0 8px;font-size:18px;border-bottom:1px solid #eee;padding-bottom:4px}ol,ul{padding-left:20px}code, .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:#f3f3f3;border-radius:6px;padding:1px 6px}.note{color:#444;background:#fff8d8;border:1px solid #f0e2a0;border-radius:8px;padding:8px 10px;margin:8px 0}.tip{color:#155724;background:#e6ffed;border:1px solid #b7f5c5;border-radius:8px;padding:8px 10px;margin:8px 0}.muted{color:#666}@media print{ body{color:#000} .note,.tip{border-color:#aaa} }`;
         const html = `<!doctype html><html><head><meta charset="utf-8"><title>Help • Student Rider Log</title><style>${css}</style></head>
         <body>
           <h1>Help & Tips — Student Rider Log</h1>
           <p class="muted">This page covers saving/printing on mobile, exporting/importing data, duplicating weeks, and viewing/printing saved entries.</p>
-
-          <h2>Save as PDF (Android)</h2>
-          <ol>
-            <li>Open the week or month you want to print and tap <span class="kbd">PDF</span> or <span class="kbd">Monthly Print to PDF</span>.</li>
-            <li>In the Android print sheet, choose <strong>Save as PDF</strong> as the printer.</li>
-            <li>Set orientation to <strong>Landscape</strong>.</li>
-            <li>Tap <strong>Save</strong> and pick a folder.</li>
-          </ol>
-
-          <h2>Save as PDF (iPhone/iPad)</h2>
-          <ol>
-            <li>Open the week or month and tap <span class="kbd">PDF</span> or <span class="kbd">Monthly Print to PDF</span>.</li>
-            <li>When the iOS print preview shows, pinch out on the preview to open a full‑page PDF.</li>
-            <li>Tap the <strong>Share</strong> icon → choose <strong>Save to Files</strong> or your PDF app.</li>
-            <li>Make sure orientation is <strong>Landscape</strong> if asked.</li>
-          </ol>
-
-          <h2>Export your data</h2>
-          <ol>
-            <li>On the main page, click <span class="kbd">Export</span>.</li>
-            <li>A file like <code>student_rider_backup_YYYYMMDD.json</code> will download.</li>
-            <li>Keep it somewhere safe (Drive, iCloud, etc.).</li>
-          </ol>
-
-          <h2>Import your data</h2>
-          <ol>
-            <li>Click <span class="kbd">Import…</span> and choose your backup <code>.json</code> file.</li>
-            <li>Entries are <strong>merged</strong> by ID. Newer versions win if duplicates exist.</li>
-            <li>Driver name preference is imported too.</li>
-          </ol>
-
-          <h2>Duplicate a week for a new week</h2>
-          <ol>
-            <li>Use the <strong>Student</strong> and <strong>Saved week</strong> pickers to select an entry.</li>
-            <li>Click <span class="kbd">Duplicate → New Week</span>.</li>
-            <li>A new blank week is created starting the next calendar week. Edit and save.</li>
-          </ol>
-
-          <h2>View saved weekly entries</h2>
-          <ul>
-            <li>Use the compact pickers: choose a <strong>Student</strong> → then choose a <strong>Saved week</strong>.</li>
-            <li>Click <span class="kbd">Edit</span> to load it back into the form.</li>
-            <li>Or open <strong>Show all saved entries</strong> to see the full list with actions.</li>
-          </ul>
-
-          <h2>Print a saved week</h2>
-          <ol>
-            <li>Select a student and week with the pickers.</li>
-            <li>Click <span class="kbd">PDF</span> to open a printable weekly report.</li>
-            <li>Choose <strong>Landscape</strong> and save/print.</li>
-          </ol>
-
+          <h2>Save as PDF (Android)</h2><ol><li>Open the week or month you want to print and tap <span class="kbd">PDF</span> or <span class="kbd">Monthly Print to PDF</span>.</li><li>In the Android print sheet, choose <strong>Save as PDF</strong> as the printer.</li><li>Set orientation to <strong>Landscape</strong>.</li><li>Tap <strong>Save</strong> and pick a folder.</li></ol>
+          <h2>Save as PDF (iPhone/iPad)</h2><ol><li>Open the week or month and tap <span class="kbd">PDF</span> or <span class="kbd">Monthly Print to PDF</span>.</li><li>When the iOS print preview shows, pinch out on the preview to open a full‑page PDF.</li><li>Tap the <strong>Share</strong> icon → choose <strong>Save to Files</strong> or your PDF app.</li><li>Make sure orientation is <strong>Landscape</strong> if asked.</li></ol>
+          <h2>Export your data</h2><ol><li>On the main page, click <span class="kbd">Export</span>.</li><li>A file like <code>student_rider_backup_YYYYMMDD.json</code> will download.</li><li>Keep it somewhere safe (Drive, iCloud, etc.).</li></ol>
+          <h2>Import your data</h2><ol><li>Click <span class="kbd">Import…</span> and choose your backup <code>.json</code> file.</li><li>Entries are <strong>merged</strong> by ID. Newer versions win if duplicates exist.</li><li>Driver name preference is imported too.</li></ol>
+          <h2>Duplicate a week for a new week</h2><ol><li>Use the <strong>Student</strong> and <strong>Saved week</strong> pickers to select an entry.</li><li>Click <span class="kbd">Duplicate → New Week</span>.</li><li>A new blank week is created starting the next calendar week. Edit and save.</li></ol>
+          <h2>View saved weekly entries</h2><ul><li>Use the compact pickers: choose a <strong>Student</strong> → then choose a <strong>Saved week</strong>.</li><li>Click <span class="kbd">Edit</span> to load it back into the form.</li><li>Or open <strong>Show all saved entries</strong> to see the full list with actions.</li></ul>
+          <h2>Print a saved week</h2><ol><li>Select a student and week with the pickers.</li><li>Click <span class="kbd">PDF</span> to open a printable weekly report.</li><li>Choose <strong>Landscape</strong> and save/print.</li></ol>
           <div class="note"><strong>Where data is stored?</strong> Everything is saved locally in your browser. To move devices or switch browsers, use <em>Export</em> on the old device and <em>Import…</em> on the new one.</div>
           <div class="tip"><strong>Signature:</strong> Enter the driver name next to the Monthly print button. It prints as an electronic signature and the date auto‑fills.</div>
         </body></html>`;
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
+        w.document.open(); w.document.write(html); w.document.close();
       }
       btnHelp.addEventListener("click", openHelp);
+
+      // Drag-to-scroll fallback
+      const scroller = document.querySelector('.week-grid');
+      if (scroller) {
+        let isDown = false, startX = 0, startScrollLeft = 0;
+        scroller.addEventListener('pointerdown', (e)=>{
+          isDown = true; startX = e.clientX; startScrollLeft = scroller.scrollLeft;
+          scroller.setPointerCapture(e.pointerId); scroller.style.cursor = 'grabbing';
+        });
+        scroller.addEventListener('pointermove', (e)=>{ if(!isDown) return; const dx = e.clientX - startX; scroller.scrollLeft = startScrollLeft - dx; });
+        ['pointerup','pointercancel','pointerleave'].forEach(type=> scroller.addEventListener(type, ()=>{ isDown=false; scroller.style.cursor=''; }));
+      }
 
       // initial render
       render();
