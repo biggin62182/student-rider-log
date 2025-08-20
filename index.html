@@ -5,69 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Rider Log</title>
   <style>
-    :root{ --bg:#0b0c10; --ink:#e8eaf0; --muted:#a0a6b3; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35); }
+    :root{ --bg:#0b0c10; --ink:#e8eaf0; --muted:#a0a6b3; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35); --accent:#7ac1ff; }
     *{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; color:var(--ink); background:var(--bg); line-height:1.45;}
-    .wrap{max-width:1200px;margin:24px auto 80px;padding:0 16px;}
+    .wrap{max-width:1200px;margin:24px auto 120px;padding:0 16px;}
     .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
     form{padding:20px;display:grid;gap:16px;}
     .grid{display:grid;gap:12px;} @media(min-width:780px){ .cols-2{grid-template-columns:1fr 1fr;} .cols-3{grid-template-columns:repeat(3,1fr);} }
     label{display:block;font-size:14px;margin:0 0 6px;color:var(--muted);}
     input,select,button{font:inherit;color:var(--ink);} input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(15,17,23,.85);outline:none;}
-    .toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);flex-wrap:wrap;position:sticky;bottom:0}
+    .toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);flex-wrap:wrap;position:sticky;bottom:0;z-index:2}
     .btn{padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(122,193,255,.15);cursor:pointer;font-weight:700;font-size:13px}
-    .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}
+    .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)} .btn.warn{background:rgba(255,231,92,.22);border-color:rgba(255,231,92,.35)}
 
-    /* WEEK GRID */
+    /* WEEK GRID — smaller cards + always horizontal scroll + arrows visible */
     .weekWrap{position:relative}
-    .week-hint{display:none;font-size:12px;color:var(--muted);margin-top:6px}
-    .week-grid{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(160px,1fr));}
-    .dayCard{padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);min-width:220px}
-    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-
-    /* Mobile: horizontal swipe/scroll with arrows */
-    @media (max-width: 900px){
-      .week-grid{
-        display:flex;
-        gap:10px;
-        overflow-x:auto;
-        padding: 4px 2px 8px;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-        touch-action: pan-x;
-        overscroll-behavior-inline: contain;
-      }
-      .dayCard{
-        flex: 0 0 220px;
-        min-width: 220px;
-        scroll-snap-align: start;
-      }
-      .week-hint{ display:block; }
-      .weekNav{ display:block; }
-    }
-
-    .weekNav{
-      display:none;
-      position:relative;
-      margin: 4px 0 0;
-      height: 0;
-    }
-    .weekNav button{
-      position:absolute; top:-44px; width:36px; height:36px; border-radius:50%;
-      border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.35); color:#fff; font-weight:800; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 6px 18px rgba(0,0,0,.35);
-    }
-    .weekNav .left{ left: -6px; }
-    .weekNav .right{ right: -6px; }
+    .week-grid{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;touch-action:pan-x;overscroll-behavior-inline:contain}
+    .dayCard{padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);flex:0 0 180px;min-width:180px;scroll-snap-align:start}
+    .dayCard label{font-size:12px}
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .weekNav{display:block;position:relative;margin:0;height:0}
+    .weekNav button{position:absolute; top:-42px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.45); color:#fff; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    .weekNav .left{ left:-6px } .weekNav .right{ right:-6px }
 
     .submissions{margin-top:22px;}
     .empty{padding:14px;color:var(--muted);font-size:14px;border:1px dashed rgba(255,255,255,.18);border-radius:12px;text-align:center;}
     .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0 12px;}
-    .dim{color:var(--muted);font-size:13px;}
+    .controls .group{display:flex;flex-direction:column;gap:6px}
     .spacer{flex:1 1 auto}
     .hint{font-size:12px;color:var(--muted);}
 
-    /* PRINT (LANDSCAPE) */
+    /* PRINT AREAS */
     #printArea{ display:none; }
     @media print{
       @page{ size: Letter landscape; margin: .35in; }
@@ -75,6 +42,20 @@
       .submissions, form, .toolbar{ display:none !important; }
       #printArea{ display:block !important; }
     }
+
+    /* MONTHLY SUMMARY STYLE (when printed) */
+    .ms-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
+    .ms-title{font-weight:800;font-size:18px}
+    .ms-meta{font-size:12px;color:#333}
+    .cal{width:100%;border-collapse:separate;border-spacing:0}
+    .cal th{background:#eee;border:1px solid #ccc;padding:6px 8px;text-align:center;font-weight:700}
+    .cal td{vertical-align:top;border:1px solid #ddd;height:96px;padding:6px 6px}
+    .daynum{font-weight:700;font-size:12px;margin-bottom:4px}
+    .badge{display:inline-block;font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid #bbb;margin:2px 2px 0 0;background:#f9f9f9}
+    .legend{font-size:11px;margin-top:6px;color:#444}
+    .signRow{display:flex;gap:24px;margin-top:16px;align-items:center}
+    .sig{border-bottom:1px solid #333;min-width:260px;height:24px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 6px}
+    .sig small{color:#666}
   </style>
 </head>
 <body>
@@ -127,7 +108,6 @@
               <button type="button" class="left" id="weekLeft" aria-label="Scroll left">‹</button>
               <button type="button" class="right" id="weekRight" aria-label="Scroll right">›</button>
             </div>
-            <div class="week-hint">Swipe or drag sideways to see all days →</div>
           </div>
           <template id="optionTemplate">
             <option value="">—</option>
@@ -161,24 +141,33 @@
         <h2 style="margin:0;font-size:18px;">Saved entries</h2>
       </div>
 
-      <!-- Compact: Student → Week picker -->
+      <!-- Compact: Student → Week picker and Monthly Summary -->
       <div class="controls">
-        <div>
+        <div class="group">
           <label for="studentPicker">Student</label>
           <select id="studentPicker"></select>
         </div>
-        <div>
+        <div class="group">
           <label for="weekPicker">Saved week</label>
           <select id="weekPicker"></select>
         </div>
-        <div class="actions">
+        <div class="group">
+          <label for="driverName">Driver name (for signature)</label>
+          <input id="driverName" placeholder="Type your name…" />
+        </div>
+        <div class="group">
+          <label for="monthPicker">Monthly summary</label>
+          <input id="monthPicker" type="month" />
+        </div>
+        <div class="actions" style="gap:8px;display:flex;align-items:flex-end">
           <button id="qpEdit" class="btn secondary" type="button">Edit</button>
-          <button id="qpPdf" class="btn" type="button">PDF</button>
+          <button id="qpPdf" class="btn" type="button">Week PDF</button>
           <button id="qpDup" class="btn success" type="button">Duplicate → New Week</button>
+          <button id="btnMonthlyPdf" class="btn warn" type="button" title="Monthly Summary with signature">Monthly PDF</button>
         </div>
         <span class="spacer"></span>
         <div class="actions">
-          <button id="btnHelp" class="btn" type="button" style="background:rgba(255,231,92,.22);border:1px solid rgba(255,231,92,.35)">Help & Tips</button>
+          <button id="btnHelp" class="btn warn" type="button">Help & Tips</button>
           <button id="btnExport" class="btn secondary" type="button">Export</button>
           <button id="btnImport" class="btn" type="button">Import…</button>
           <input id="importFile" type="file" accept="application/json" style="display:none" />
@@ -196,6 +185,7 @@
   (function(){
     try{
       const KEY = "student_rider_records_v1";
+      const KEY_PROFILE = "student_rider_profile";
 
       const form = document.getElementById("riderForm");
       const emptyState = document.getElementById("emptyState");
@@ -206,6 +196,7 @@
       const qpEdit = document.getElementById("qpEdit");
       const qpPdf = document.getElementById("qpPdf");
       const qpDup = document.getElementById("qpDup");
+      const btnMonthlyPdf = document.getElementById("btnMonthlyPdf");
       const btnHelp = document.getElementById("btnHelp");
       const btnExport = document.getElementById("btnExport");
       const btnImport = document.getElementById("btnImport");
@@ -213,6 +204,8 @@
       const btnNew = document.getElementById("btnNew");
       const weekLeft = document.getElementById("weekLeft");
       const weekRight = document.getElementById("weekRight");
+      const monthPicker = document.getElementById("monthPicker");
+      const driverNameInput = document.getElementById("driverName");
 
       const streetInput = document.getElementById("street");
       const street2Input = document.getElementById("street2");
@@ -287,6 +280,8 @@
       function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || "[]"); }catch{ return []; } }
       function save(all){ localStorage.setItem(KEY, JSON.stringify(all)); }
       function genId(){ return (crypto?.randomUUID? crypto.randomUUID(): (Date.now().toString(36)+Math.random().toString(36).slice(2))); }
+      function loadProfile(){ try{ return JSON.parse(localStorage.getItem(KEY_PROFILE)||"{}"); }catch{ return {}; } }
+      function saveProfile(p){ localStorage.setItem(KEY_PROFILE, JSON.stringify(p||{})); }
 
       function fmtAddress(r){
         const l2 = r.street2 ? (", " + r.street2) : "";
@@ -304,13 +299,25 @@
         }
         return "";
       }
-
       function normalizeShort(v){
         if(!v) return "";
         return String(v).replace(/NS \(no show\)/gi, "NS").replace(/Car Rider/gi,"Car").replace(/No School/gi,"Closed").trim();
       }
+      function compress(v){
+        const s = normalizeShort(v);
+        if(!s) return "";
+        if(/^Rode$/i.test(s)) return "Rode";
+        if(/^Closed$/i.test(s)) return "No School";
+        return s;
+      }
 
-      btnNew?.addEventListener("click", ()=>{
+      // Profile (driver name)
+      const prof = loadProfile();
+      if(prof.driverName){ driverNameInput.value = prof.driverName; }
+      driverNameInput.addEventListener('input', ()=> saveProfile({ ...(loadProfile()||{}), driverName: driverNameInput.value }));
+
+      // New Entry
+      document.getElementById("btnNew")?.addEventListener("click", ()=>{
         form.reset();
         recordIdInput.value = "";
         renderDefaultWeekOf();
@@ -363,19 +370,18 @@
         alert("Saved. You can keep filling the week, or start a New entry for another student.");
       });
 
+      // Quick pickers
       function populateQuickPicker(rows){
         const students = Array.from(new Set(rows.map(r=>r.studentName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
         studentPicker.innerHTML = "";
         const sOpt = document.createElement("option"); sOpt.value=""; sOpt.textContent="— Select student —"; studentPicker.appendChild(sOpt);
         students.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; studentPicker.appendChild(o); });
-        weekPicker.innerHTML = "";
-        const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
+        weekPicker.innerHTML = ""; const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
       }
       function populateWeeksForStudent(student){
         const rows = load().filter(r=> r.studentName === student);
         const weeks = Array.from(new Set(rows.map(r=>r.weekOf).filter(Boolean))).sort((a,b)=> (a>b?-1:1));
-        weekPicker.innerHTML = "";
-        const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
+        weekPicker.innerHTML = ""; const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
         weeks.forEach(wk=>{
           const o=document.createElement("option");
           const d = new Date(wk);
@@ -388,6 +394,14 @@
         const s = e.target.value;
         if(s) populateWeeksForStudent(s);
         else { weekPicker.innerHTML = ""; const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt); }
+        // default month picker to current month of most recent week for that student
+        if(s){
+          const recs = load().filter(r=> r.studentName===s).sort((a,b)=> new Date(b.weekOf)-new Date(a.weekOf));
+          if(recs[0]){
+            const d = new Date(recs[0].weekOf);
+            monthPicker.value = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
+          }
+        }
       });
       function getSelectedRecord(){
         const s = studentPicker.value; const w = weekPicker.value;
@@ -398,29 +412,27 @@
         return rows[0];
       }
       qpEdit?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); enterEditMode(r); });
-      qpPdf?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); printRecords([r]); });
+      qpPdf?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); printWeeks([r]); });
       qpDup?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); duplicateToNextWeek(r); });
 
+      // PRINT (weekly)
       const printArea = document.getElementById("printArea");
-      function cell(txt){ const td=document.createElement('td'); td.textContent = normalizeShort(txt)||"—"; return td; }
-      function makeReportCard(r){
+      function cell(txt){ const td=document.createElement('td'); td.textContent = (normalizeShort(txt)||"—"); return td; }
+      function makeWeeklyCard(r){
         const sec = document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px 12px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
-        const head = document.createElement('div'); head.style.display="flex"; head.style.justifyContent="space-between"; head.style.alignItems="flex-start"; head.style.gap="10px"; head.style.marginBottom="6px";
-        const h1 = document.createElement('div'); h1.style.fontWeight="800"; h1.textContent='Student Rider Log — Weekly Report';
-        const meta = document.createElement('div'); meta.style.fontSize="11px"; meta.style.color="#333"; meta.textContent='Saved: ' + new Date(r.savedAt||Date.now()).toLocaleString();
-        head.appendChild(h1); head.appendChild(meta); sec.appendChild(head);
-
+        const head = document.createElement('div'); head.className='ms-head';
+        const title = document.createElement('div'); title.className='ms-title'; title.textContent='Student Rider Log — Weekly Report';
+        const meta = document.createElement('div'); meta.className='ms-meta'; meta.textContent='Saved: ' + new Date(r.savedAt||Date.now()).toLocaleString();
+        head.appendChild(title); head.appendChild(meta); sec.appendChild(head);
         const info = document.createElement('div'); info.style.fontSize="12px"; info.style.marginBottom="6px";
-        info.textContent = `Week of ${r.weekOf? new Date(r.weekOf).toLocaleDateString(): ""} • Student ${r.studentName||""} • Address ${fmtAddress(r)}`;
+        info.textContent = `Week of ${r.weekOf? new Date(r.weekOf).toLocaleDateString(): ""}  •  Student ${r.studentName||""}  •  Address ${fmtAddress(r)}`;
         sec.appendChild(info);
 
         const table = document.createElement('table'); table.style.width="100%"; table.style.borderCollapse="collapse";
         const thead = document.createElement('thead'); const trh=document.createElement('tr');
         ['Day','AM','PM'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; th.style.borderBottom="1px solid #bbb"; th.style.padding="6px 8px"; th.style.textAlign="left"; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
-
         const tb = document.createElement('tbody');
-        const w=r.week||{};
-        const d = getDayDatesFromWeekOf(r.weekOf);
+        const w=r.week||{}; const d = getDayDatesFromWeekOf(r.weekOf);
         [
           [`Monday (${(d.mon? new Date(d.mon).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'mon','Am'), getWeekVal(w,'mon','Pm')],
           [`Tuesday (${(d.tue? new Date(d.tue).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm')],
@@ -430,9 +442,9 @@
         ].forEach(row=>{ const tr=document.createElement('tr'); ['6px 8px','6px 8px','6px 8px'].forEach((pad,i)=>{ const td=cell(row[i]); td.style.padding=pad; if(i>0) td.style.width='32%'; tr.appendChild(td); }); tb.appendChild(tr); });
         table.appendChild(tb); sec.appendChild(table); return sec;
       }
-      function printRecords(records){
+      function printWeeks(records){
         if(!records || !records.length){ alert("Nothing to print."); return; }
-        printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeReportCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
+        printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeWeeklyCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
         setTimeout(()=>window.print(), 10);
       }
 
@@ -470,11 +482,18 @@
         const newRec = { ...r, id: genId(), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
         const all = load(); all.unshift(newRec); save(all); enterEditMode(newRec);
       }
+
       function render(){
         const rows = load();
         const has = rows.length>0;
-        document.getElementById("emptyState").style.display = has? "none" : "block";
+        emptyState.style.display = has? "none" : "block";
         populateQuickPicker(rows);
+
+        // default monthPicker
+        if(!monthPicker.value){
+          const d = new Date();
+          monthPicker.value = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
+        }
       }
 
       // Export/Import + Help
@@ -487,15 +506,16 @@
         setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
       }
       function exportAll(){
-        const data = { exportedAt: new Date().toISOString(), records: load() };
+        const data = { exportedAt: new Date().toISOString(), records: load(), profile: loadProfile() };
         const ts = new Date().toISOString().replace(/[-:]/g,'').slice(0,15);
         download(`student_rider_backup_${ts}.json`, JSON.stringify(data, null, 2));
       }
       function importMerge(json){
-        let incoming = [];
+        let incoming = []; let profile = null;
         try{
           const obj = JSON.parse(json);
           incoming = Array.isArray(obj) ? obj : (obj.records || []);
+          profile = obj.profile || null;
         }catch(e){
           alert("Invalid JSON file."); return;
         }
@@ -509,6 +529,7 @@
         }
         const merged = Array.from(byId.values()).sort((a,b)=> new Date(b.savedAt)-new Date(a.savedAt));
         localStorage.setItem(KEY, JSON.stringify(merged));
+        if(profile){ saveProfile(profile); driverNameInput.value = profile.driverName || ""; }
         render();
         alert(`Import complete. Total entries: ${merged.length}.`);
       }
@@ -525,94 +546,139 @@
       btnHelp?.addEventListener("click", ()=>{
         const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=800");
         if(!w){ alert("Pop-up blocked. Please allow pop-ups for this page to view Help."); return; }
-        w.document.write("<!doctype html><html><head><meta charset='utf-8'><title>Help</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.5;padding:20px;max-width:900px;margin:0 auto}h1{font-size:22px;margin:0 0 12px}h2{font-size:18px;margin:18px 0 8px;border-bottom:1px solid #eee;padding-bottom:4px}ol,ul{padding-left:20px}.kbd{font-family:ui-monospace,monospace;background:#f3f3f3;border-radius:6px;padding:1px 6px}</style></head><body><h1>Help & Tips</h1><h2>Mobile scrolling</h2><p>Swipe sideways on the day cards, or tap the ◀ ▶ buttons to scroll through Monday–Friday.</p><h2>Saving entries</h2><p>Tap <span class='kbd'>Save entry</span>. Use <span class='kbd'>New entry</span> to start another student.</p><h2>Export & Import</h2><p>Use <span class='kbd'>Export</span> to download a backup. Use <span class='kbd'>Import…</span> to merge on a new device.</p></body></html>");
+        w.document.write("<!doctype html><html><head><meta charset='utf-8'><title>Help</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.5;padding:20px;max-width:900px;margin:0 auto}h1{font-size:22px;margin:0 0 12px}h2{font-size:18px;margin:18px 0 8px;border-bottom:1px solid #eee;padding-bottom:4px}ol,ul{padding-left:20px}.kbd{font-family:ui-monospace,monospace;background:#f3f3f3;border-radius:6px;padding:1px 6px}</style></head><body><h1>Help & Tips</h1><h2>Mobile scrolling</h2><p>Swipe sideways on the day cards, drag with your finger, or tap the ◀ ▶ buttons to scroll through Monday–Friday.</p><h2>Saving entries</h2><p>Tap <span class='kbd'>Save entry</span>. Use <span class='kbd'>New entry</span> to start another student.</p><h2>Monthly summary</h2><ol><li>Select a <b>Student</b> and set the <b>Month</b>.</li><li>Enter your <b>Driver name</b> (stored on this device).</li><li>Tap <span class='kbd'>Monthly PDF</span> and choose <b>Save as PDF</b> on Android/iOS.</li></ol><h2>Export & Import</h2><p>Use <span class='kbd'>Export</span> to download a backup. Use <span class='kbd'>Import…</span> to merge on a new device.</p></body></html>");
         w.document.close();
       });
 
-      // Drag-to-scroll + arrow buttons for week grid
+      // Drag-to-scroll + arrow buttons for week grid (pointer + touch)
       const scroller = document.querySelector('.week-grid');
       if (scroller) {
         let isDown = false, startX = 0, startScrollLeft = 0;
-        scroller.addEventListener('pointerdown', (e)=>{
-          isDown = true; startX = e.clientX; startScrollLeft = scroller.scrollLeft;
-          scroller.setPointerCapture(e.pointerId); scroller.style.cursor = 'grabbing';
-        });
-        scroller.addEventListener('pointermove', (e)=>{ if(!isDown) return; const dx = e.clientX - startX; scroller.scrollLeft = startScrollLeft - dx; });
-        ['pointerup','pointercancel','pointerleave'].forEach(type=> scroller.addEventListener(type, ()=>{ isDown=false; scroller.style.cursor=''; }));
-        function jump(dir){ scroller.scrollBy({ left: dir * Math.max(220, scroller.clientWidth*0.9), behavior: 'smooth' }); }
+        const onDown = (x)=>{ isDown = true; startX = x; startScrollLeft = scroller.scrollLeft; scroller.style.cursor='grabbing'; };
+        const onMove = (x)=>{ if(!isDown) return; const dx = x - startX; scroller.scrollLeft = startScrollLeft - dx; };
+        const end = ()=>{ isDown=false; scroller.style.cursor=''; };
+        scroller.addEventListener('pointerdown', (e)=>{ scroller.setPointerCapture?.(e.pointerId); onDown(e.clientX); });
+        scroller.addEventListener('pointermove', (e)=> onMove(e.clientX));
+        ['pointerup','pointercancel','pointerleave'].forEach(t=> scroller.addEventListener(t, end));
+        scroller.addEventListener('touchstart', (e)=>{ if(e.touches && e.touches[0]) onDown(e.touches[0].clientX); }, {passive:true});
+        scroller.addEventListener('touchmove', (e)=>{ if(e.touches && e.touches[0]) onMove(e.touches[0].clientX); }, {passive:true});
+        scroller.addEventListener('touchend', end);
+        function jump(dir){ scroller.scrollBy({ left: dir * Math.max(180, scroller.clientWidth*0.9), behavior: 'smooth' }); }
         weekLeft?.addEventListener('click', ()=>jump(-1));
         weekRight?.addEventListener('click', ()=>jump(1));
       }
 
-      function enterEditMode(r){
-        recordIdInput.value = r.id;
-        document.getElementById("weekOf").value = r.weekOf || "";
-        document.getElementById("studentName").value = r.studentName || "";
-        streetInput.value = r.street || "";
-        street2Input.value = r.street2 || "";
-        cityInput.value = r.city || "";
-        stateInput.value = r.state || "";
-        zipInput.value = r.zip || "";
-        homeDistrictInput.value = r.homeDistrict || "";
-        schoolNameInput.value = r.schoolName || "";
-        schoolDistrictInput.value = r.schoolDistrict || "";
-        const w = r.week || {};
-        document.getElementById("monAm").value = getWeekVal(w,'mon','Am');
-        document.getElementById("monPm").value = getWeekVal(w,'mon','Pm');
-        document.getElementById("tueAm").value = getWeekVal(w,'tue','Am');
-        document.getElementById("tuePm").value = getWeekVal(w,'tue','Pm');
-        document.getElementById("wedAm").value = getWeekVal(w,'wed','Am');
-        document.getElementById("wedPm").value = getWeekVal(w,'wed','Pm');
-        document.getElementById("thuAm").value = getWeekVal(w,'thu','Am');
-        document.getElementById("thuPm").value = getWeekVal(w,'thu','Pm');
-        document.getElementById("friAm").value = getWeekVal(w,'fri','Am');
-        document.getElementById("friPm").value = getWeekVal(w,'fri','Pm');
-        updateDayLabels();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      function duplicateToNextWeek(r){
-        const base = r.weekOf ? new Date(r.weekOf) : new Date();
-        const s = new Date(base); s.setDate(s.getDate() - s.getDay()); s.setDate(s.getDate()+7);
-        const weekOf = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
-        const blankWeek = { monAm:"",monPm:"",tueAm:"",tuePm:"",wedAm:"",wedPm:"",thuAm:"",thuPm:"",friAm:"",friPm:"" };
-        const newRec = { ...r, id: genId(), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
-        const all = load(); all.unshift(newRec); save(all); enterEditMode(newRec);
+      // WEEKLY printing helper
+      function printWeeks(recs){
+        if(!recs||!recs.length) return alert("Nothing to print.");
+        printArea.innerHTML=""; recs.forEach((r,i)=>{ printArea.appendChild(makeWeeklyCard(r)); if(i<recs.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br);} });
+        setTimeout(()=>window.print(),10);
       }
 
-      function printRecords(records){
-        if(!records || !records.length){ alert("Nothing to print."); return; }
-        const printArea = document.getElementById("printArea");
-        function cell(txt){ const td=document.createElement('td'); td.textContent = normalizeShort(txt)||"—"; return td; }
-        function makeReportCard(r){
-          const sec = document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px 12px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
-          const head = document.createElement('div'); head.style.display="flex"; head.style.justifyContent="space-between"; head.style.alignItems="flex-start"; head.style.gap="10px"; head.style.marginBottom="6px";
-          const h1 = document.createElement('div'); h1.style.fontWeight="800"; h1.textContent='Student Rider Log — Weekly Report';
-          const meta = document.createElement('div'); meta.style.fontSize="11px"; meta.style.color="#333"; meta.textContent='Saved: ' + new Date(r.savedAt||Date.now()).toLocaleString();
-          head.appendChild(h1); head.appendChild(meta); sec.appendChild(head);
-          const info = document.createElement('div'); info.style.fontSize="12px"; info.style.marginBottom="6px";
-          info.textContent = `Week of ${r.weekOf? new Date(r.weekOf).toLocaleDateString(): ""} • Student ${r.studentName||""} • Address ${fmtAddress(r)}`; sec.appendChild(info);
-          const table = document.createElement('table'); table.style.width="100%"; table.style.borderCollapse="collapse";
-          const thead = document.createElement('thead'); const trh=document.createElement('tr');
-          ['Day','AM','PM'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; th.style.borderBottom="1px solid #bbb"; th.style.padding="6px 8px"; th.style.textAlign="left"; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
-          const tb = document.createElement('tbody');
-          const w=r.week||{}; const d = getDayDatesFromWeekOf(r.weekOf);
-          [
-            [`Monday (${(d.mon? new Date(d.mon).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'mon','Am'), getWeekVal(w,'mon','Pm')],
-            [`Tuesday (${(d.tue? new Date(d.tue).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm')],
-            [`Wednesday (${(d.wed? new Date(d.wed).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'wed','Am'), getWeekVal(w,'wed','Pm')],
-            [`Thursday (${(d.thu? new Date(d.thu).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'thu','Am'), getWeekVal(w,'thu','Pm')],
-            [`Friday (${(d.fri? new Date(d.fri).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'fri','Am'), getWeekVal(w,'fri','Pm')],
-          ].forEach(row=>{ const tr=document.createElement('tr'); ['6px 8px','6px 8px','6px 8px'].forEach((pad,i)=>{ const td=cell(row[i]); td.style.padding=pad; if(i>0) td.style.width='32%'; tr.appendChild(td); }); tb.appendChild(tr); });
-          table.appendChild(tb); sec.appendChild(table); return sec;
+      // MONTHLY SUMMARY (calendar grid with AM/PM only + signature)
+      function buildMonthlyData(student, y, m){ // m: 0..11
+        const map = {}; // 'YYYY-MM-DD' -> {am, pm}
+        const rows = load().filter(r=> r.studentName === student);
+        for(const r of rows){
+          const dates = getDayDatesFromWeekOf(r.weekOf);
+          const w = r.week || {};
+          [['mon','Am'],['mon','Pm'],['tue','Am'],['tue','Pm'],['wed','Am'],['wed','Pm'],['thu','Am'],['thu','Pm'],['fri','Am'],['fri','Pm']].forEach(([d,ap])=>{
+            const date = dates[d]; if(!date) return;
+            const dt = new Date(date);
+            if(dt.getFullYear()!==y || dt.getMonth()!==m) return;
+            const key = date;
+            map[key] = map[key] || {am:"", pm:""};
+            const val = getWeekVal(w, d, ap);
+            if(ap==='Am') map[key].am = val;
+            else map[key].pm = val;
+          });
         }
-        printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeReportCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
+        return map;
+      }
+      function makeMonthlyCard(student, monthStr, driverName){
+        if(!student) { alert("Pick a student first."); return null; }
+        if(!monthStr){ alert("Pick a month for the summary."); return null; }
+        const [yy,mm] = monthStr.split('-'); const y = Number(yy), m = Number(mm)-1;
+        const first = new Date(y,m,1); const last = new Date(y,m+1,0);
+        const firstDow = first.getDay(); // 0 Sun..6 Sat
+        const daysInMonth = last.getDate();
+        const data = buildMonthlyData(student, y, m);
+
+        const sec = document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px 12px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
+        const head = document.createElement('div'); head.className='ms-head';
+        const title = document.createElement('div'); title.className='ms-title'; title.textContent=`Monthly Summary — ${first.toLocaleDateString(undefined,{month:'long',year:'numeric'})}`;
+        const meta = document.createElement('div'); meta.className='ms-meta'; meta.textContent='Generated: ' + new Date().toLocaleString();
+        head.appendChild(title); head.appendChild(meta); sec.appendChild(head);
+
+        // Rider info
+        const rows = load().filter(r=> r.studentName===student).sort((a,b)=> new Date(b.savedAt)-new Date(a.savedAt));
+        const latest = rows[0] || {};
+        const info = document.createElement('div'); info.style.fontSize="12px"; info.style.marginBottom="6px";
+        info.textContent = `Student ${latest.studentName||student}  •  Address ${fmtAddress(latest)}  •  Home District ${latest.homeDistrict||""}  •  School ${latest.schoolName||""} (${latest.schoolDistrict||""})`;
+        sec.appendChild(info);
+
+        const table = document.createElement('table'); table.className='cal';
+        const thead = document.createElement('thead'); const trh=document.createElement('tr');
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+
+        const tb = document.createElement('tbody');
+        let day = 1 - firstDow;
+        for(let r=0;r<6;r++){
+          const tr = document.createElement('tr');
+          for(let c=0;c<7;c++,day++){
+            const td = document.createElement('td');
+            const valid = (day>=1 && day<=daysInMonth);
+            if(valid){
+              const dstr = y + "-" + String(m+1).padStart(2,'0') + "-" + String(day).padStart(2,'0');
+              const dn = document.createElement('div'); dn.className='daynum'; dn.textContent = String(day); td.appendChild(dn);
+              const vals = data[dstr] || null;
+              if(vals){
+                const am = compress(vals.am); const pm = compress(vals.pm);
+                if(am){ const b=document.createElement('div'); b.className='badge'; b.textContent="AM: " + am; td.appendChild(b); }
+                if(pm){ const b=document.createElement('div'); b.className='badge'; b.textContent="PM: " + pm; td.appendChild(b); }
+              }
+            } else {
+              td.style.background="#fafafa";
+            }
+            tr.appendChild(td);
+          }
+          tb.appendChild(tr);
+        }
+        table.appendChild(tb);
+        sec.appendChild(table);
+
+        const legend = document.createElement('div'); legend.className='legend'; legend.textContent = "Legend: Rode, NS (no show), Sick, Car Rider, No School"; sec.appendChild(legend);
+
+        const sign = document.createElement('div'); sign.className='signRow';
+        const sigBox = document.createElement('div'); sigBox.className='sig';
+        const left = document.createElement('div'); left.textContent = (driverName||''); left.style.fontWeight='700';
+        const leftLbl = document.createElement('small'); leftLbl.textContent = "Driver Signature";
+        sigBox.appendChild(left); sigBox.appendChild(leftLbl);
+        const dateBox = document.createElement('div'); dateBox.className='sig';
+        const today = new Date(); const dstr = today.toLocaleDateString();
+        const right = document.createElement('div'); right.textContent = dstr; right.style.fontWeight='700';
+        const rightLbl = document.createElement('small'); rightLbl.textContent = "Date Signed";
+        dateBox.appendChild(right); dateBox.appendChild(rightLbl);
+        sign.appendChild(sigBox); sign.appendChild(dateBox);
+        sec.appendChild(sign);
+
+        return sec;
+      }
+      function printMonthly(){
+        const student = studentPicker.value;
+        const monthStr = monthPicker.value;
+        const driver = driverNameInput.value.trim();
+        if(!student){ alert("Pick a student."); return; }
+        if(!monthStr){ alert("Pick a month."); return; }
+        const sec = makeMonthlyCard(student, monthStr, driver);
+        if(!sec) return;
+        printArea.innerHTML = ""; printArea.appendChild(sec);
         setTimeout(()=>window.print(), 10);
       }
+      btnMonthlyPdf?.addEventListener('click', printMonthly);
 
       // initial render
-      function render(){ const rows = load(); const has = rows.length>0; emptyState.style.display = has? "none" : "block"; populateQuickPicker(rows); }
       render();
-
     }catch(err){
       alert("Initialization error: " + (err && err.message ? err.message : err));
       console.error(err);
