@@ -4,63 +4,150 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Rider Log</title>
-  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#0b0c10;color:#e8eaf0}
-  .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
-  .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden}
-  form{padding:20px;display:grid;gap:16px}
-  .grid{display:grid;gap:12px}.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:repeat(3,1fr)}@media(max-width:780px){.cols-2,.cols-3{grid-template-columns:1fr}}
-  label{display:block;font-size:14px;color:#a0a6b3;margin-bottom:6px}
-  input,select,button{font:inherit}input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(15,17,23,.85);color:#e8eaf0}
-  .week-grid{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
-  .dayCard{flex:0 0 260px;min-width:260px;scroll-snap-align:start;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);padding:10px}
-  .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .toolbar{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:8px;justify-content:flex-end;background:rgba(0,0,0,.15)}
-  .btn{padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(122,193,255,.15);color:#e8eaf0;cursor:pointer;font-weight:700;font-size:13px}
-  .btn.secondary{background:rgba(255,255,255,.06)}.btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}.btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)}
-  .submissions{margin-top:22px}.actions{display:flex;gap:6px;flex-wrap:wrap}.empty{padding:14px;color:#a0a6b3;border:1px dashed rgba(255,255,255,.18);border-radius:12px;text-align:center}
-  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02);min-width:1100px}
-  thead th{font-size:12.5px;color:#a0a6b3;padding:8px 10px;background:rgba(0,0,0,.25);text-align:left;white-space:nowrap}
-  tbody td{padding:8px 10px;border-top:1px solid rgba(255,255,255,.06);font-size:13px;white-space:nowrap}
-  #printArea{display:none}@media print{@page{size:Letter landscape;margin:.35in}body{background:#fff;color:#000}form,.submissions{display:none!important}#printArea{display:block!important}}</style>
+  <style>
+    :root{ --bg:#0b0c10; --ink:#e8eaf0; --muted:#a0a6b3; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35); }
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; color:var(--ink); background:var(--bg); line-height:1.45;}
+    .wrap{max-width:1200px;margin:24px auto 80px;padding:0 16px;}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+    form{padding:20px;display:grid;gap:16px;}
+    .grid{display:grid;gap:12px;} @media(min-width:780px){ .cols-2{grid-template-columns:1fr 1fr;} .cols-3{grid-template-columns:repeat(3,1fr);} }
+    label{display:block;font-size:14px;margin:0 0 6px;color:var(--muted);}
+    input,select,button{font:inherit;color:var(--ink);} input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(15,17,23,.85);outline:none;}
+    .toolbar{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);flex-wrap:wrap;position:sticky;bottom:0}
+    .btn{padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(122,193,255,.15);cursor:pointer;font-weight:700;font-size:13px}
+    .btn.secondary{background:rgba(255,255,255,.06)} .btn.danger{background:rgba(255,107,107,.18);border-color:rgba(255,107,107,.25)} .btn.success{background:rgba(56,211,159,.2);border-color:rgba(56,211,159,.35)}
+
+    /* WEEK GRID */
+    .weekWrap{position:relative}
+    .week-hint{display:none;font-size:12px;color:var(--muted);margin-top:6px}
+    .week-grid{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(160px,1fr));}
+    .dayCard{padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);min-width:220px}
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+    /* Mobile: horizontal swipe/scroll with arrows */
+    @media (max-width: 900px){
+      .week-grid{
+        display:flex;
+        gap:10px;
+        overflow-x:auto;
+        padding: 4px 2px 8px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        touch-action: pan-x;
+        overscroll-behavior-inline: contain;
+      }
+      .dayCard{
+        flex: 0 0 220px;
+        min-width: 220px;
+        scroll-snap-align: start;
+      }
+      .week-hint{ display:block; }
+      .weekNav{ display:block; }
+    }
+
+    .weekNav{
+      display:none;
+      position:relative;
+      margin: 4px 0 0;
+      height: 0;
+    }
+    .weekNav button{
+      position:absolute; top:-44px; width:36px; height:36px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.35); color:#fff; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 6px 18px rgba(0,0,0,.35);
+    }
+    .weekNav .left{ left: -6px; }
+    .weekNav .right{ right: -6px; }
+
+    .submissions{margin-top:22px;}
+    .empty{padding:14px;color:var(--muted);font-size:14px;border:1px dashed rgba(255,255,255,.18);border-radius:12px;text-align:center;}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0 12px;}
+    .dim{color:var(--muted);font-size:13px;}
+    .spacer{flex:1 1 auto}
+    .hint{font-size:12px;color:var(--muted);}
+
+    /* PRINT (LANDSCAPE) */
+    #printArea{ display:none; }
+    @media print{
+      @page{ size: Letter landscape; margin: .35in; }
+      body{ background:#fff; color:#000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .submissions, form, .toolbar{ display:none !important; }
+      #printArea{ display:block !important; }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card">
-      <form id="riderForm">
+      <form id="riderForm" novalidate>
         <input type="hidden" id="recordId" />
         <div class="grid cols-3">
           <div><label for="weekOf">Week of</label><input id="weekOf" type="date" /></div>
-          <div style="grid-column: span 2;"><label for="studentName">Student name *</label><input id="studentName" required /></div>
+          <div style="grid-column: span 2;"><label for="studentName">Student name *</label><input id="studentName" required placeholder="e.g., Jordan A. Rivera" /></div>
         </div>
+
         <div class="grid cols-2">
-          <div><label for="street">Street address *</label><input id="street" required /></div>
-          <div><label for="street2">Apt / Unit</label><input id="street2" /></div>
+          <div><label for="street">Street address *</label><input id="street" required placeholder="123 Main St" /></div>
+          <div><label for="street2">Apt / Unit</label><input id="street2" placeholder="Apt 4B" /></div>
         </div>
+
         <div class="grid cols-3">
-          <div><label for="city">City *</label><input id="city" required /></div>
+          <div><label for="city">City *</label><input id="city" required placeholder="Springfield" /></div>
           <div><label for="state">State *</label>
-            <select id="state" required><option value="">Select…</option><option>MO</option><option>KS</option><option>IL</option><option>IA</option><option>NE</option><option>OK</option></select>
+            <select id="state" required>
+              <option value="">Select…</option>
+              <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
+              <option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option>
+              <option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option>
+              <option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+              <option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option>
+              <option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option>
+              <option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option>
+              <option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+              <option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option>
+              <option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+              <option>DC</option><option>PR</option><option>GU</option><option>VI</option><option>AS</option><option>MP</option>
+            </select>
           </div>
           <div><label for="zip">ZIP *</label><input id="zip" placeholder="64016 or 64016-1234" /></div>
         </div>
+
         <div class="grid cols-3">
           <div><label for="homeDistrict">Home Address District *</label><input id="homeDistrict" required /></div>
           <div><label for="schoolName">School Attending</label><input id="schoolName" /></div>
           <div><label for="schoolDistrict">Attending District *</label><input id="schoolDistrict" required /></div>
         </div>
+
         <fieldset>
-          <legend>Weekly ride log: Rode, NS (no show), Sick, Car Rider, No School</legend>
-          <div id="daysContainer" class="week-grid"></div>
+          <legend class="dim">Weekly ride log: Rode, NS (no show), Sick, Car Rider, No School</legend>
+          <div class="weekWrap">
+            <div id="daysContainer" class="week-grid" tabindex="0" aria-label="Swipe or drag to scroll days"></div>
+            <div class="weekNav">
+              <button type="button" class="left" id="weekLeft" aria-label="Scroll left">‹</button>
+              <button type="button" class="right" id="weekRight" aria-label="Scroll right">›</button>
+            </div>
+            <div class="week-hint">Swipe or drag sideways to see all days →</div>
+          </div>
           <template id="optionTemplate">
-            <option value="">—</option><option>Rode</option><option>NS (no show)</option><option>Sick</option><option>Car Rider</option><option>No School</option>
+            <option value="">—</option>
+            <option>Rode</option>
+            <option>NS (no show)</option>
+            <option>Sick</option>
+            <option>Car Rider</option>
+            <option>No School</option>
           </template>
           <template id="dayTemplate">
             <div class="dayCard">
               <div style="font-size:13px;color:#a0a6b3;font-weight:700;text-transform:uppercase" data-day-label></div>
-              <div class="twoCol"><div><label>AM</label><select data-am></select></div><div><label>PM</label><select data-pm></select></div></div>
+              <div class="twoCol">
+                <div><label>AM</label><select data-am></select></div>
+                <div><label>PM</label><select data-pm></select></div>
+              </div>
             </div>
           </template>
         </fieldset>
+
         <div class="toolbar">
           <button type="button" class="btn secondary" id="btnNew">New entry</button>
           <button type="reset" class="btn secondary">Reset</button>
@@ -70,159 +157,467 @@
     </section>
 
     <section class="submissions">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0;"><h2 style="margin:0;font-size:18px;">Saved entries</h2></div>
-      <div class="actions" style="gap:10px;flex-wrap:wrap;margin:10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0;">
+        <h2 style="margin:0;font-size:18px;">Saved entries</h2>
+      </div>
+
+      <!-- Compact: Student → Week picker -->
+      <div class="controls">
         <div>
-          <label for="studentPicker" style="display:block;font-size:12px;color:#a0a6b3">Student</label>
+          <label for="studentPicker">Student</label>
           <select id="studentPicker"></select>
         </div>
         <div>
-          <label for="weekPicker" style="display:block;font-size:12px;color:#a0a6b3">Saved week</label>
+          <label for="weekPicker">Saved week</label>
           <select id="weekPicker"></select>
         </div>
-        <button id="qpEdit" class="btn secondary" type="button">Edit</button>
-        <button id="qpPdf" class="btn" type="button">PDF</button>
-        <button id="qpDup" class="btn success" type="button">Duplicate → New Week</button>
-        <span style="flex:1 1 auto"></span>
-        <button id="btnExport" class="btn secondary" type="button">Export</button>
-        <button id="btnImport" class="btn" type="button">Import…</button><input id="importFile" type="file" accept="application/json" style="display:none" />
-      </div>
-      <details style="margin:10px 0">
-        <summary style="color:#a0a6b3">Show all saved entries (optional)</summary>
-        <div style="overflow:auto;margin-top:8px">
-          <table id="dataTable"><thead><tr><th>Actions</th><th>Week of</th><th>Student</th><th>Address</th><th>Home district</th><th>School</th><th>Attending district</th><th>Mon AM</th><th>Mon PM</th><th>Tue AM</th><th>Tue PM</th><th>Wed AM</th><th>Wed PM</th><th>Thu AM</th><th>Thu PM</th><th>Fri AM</th><th>Fri PM</th><th>Saved</th></tr></thead><tbody id="tableBody"></tbody></table>
+        <div class="actions">
+          <button id="qpEdit" class="btn secondary" type="button">Edit</button>
+          <button id="qpPdf" class="btn" type="button">PDF</button>
+          <button id="qpDup" class="btn success" type="button">Duplicate → New Week</button>
         </div>
-      </details>
+        <span class="spacer"></span>
+        <div class="actions">
+          <button id="btnHelp" class="btn" type="button" style="background:rgba(255,231,92,.22);border:1px solid rgba(255,231,92,.35)">Help & Tips</button>
+          <button id="btnExport" class="btn secondary" type="button">Export</button>
+          <button id="btnImport" class="btn" type="button">Import…</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" />
+        </div>
+      </div>
+
       <div id="emptyState" class="empty">No entries yet. Add your first student above.</div>
+      <div class="hint">Tip: Data is stored only on this device & browser. Use Export to back up or move it.</div>
     </section>
   </div>
+
   <div id="printArea" aria-hidden="true"></div>
-<script>
-(function(){
-  const KEY="student_rider_records_v1";
-  const form=document.getElementById("riderForm");
-  const tbody=document.getElementById("tableBody");
-  const empty=document.getElementById("emptyState");
-  const weekOf=document.getElementById("weekOf");
-  const recordId=document.getElementById("recordId");
-  const studentPicker=document.getElementById("studentPicker");
-  const weekPicker=document.getElementById("weekPicker");
-  const qpEdit=document.getElementById("qpEdit");
-  const qpPdf=document.getElementById("qpPdf");
-  const qpDup=document.getElementById("qpDup");
 
-  const days=[{key:'mon',label:'Monday'},{key:'tue',label:'Tuesday'},{key:'wed',label:'Wednesday'},{key:'thu',label:'Thursday'},{key:'fri',label:'Friday'}];
-  function buildDays(){
-    const cont=document.getElementById("daysContainer");
-    const dayTpl=document.getElementById("dayTemplate");
-    const optTpl=document.getElementById("optionTemplate");
-    cont.innerHTML="";
-    days.forEach(({key,label})=>{
-      const node=dayTpl.content.firstElementChild.cloneNode(true);
-      node.querySelector("[data-day-label]").textContent=label;
-      const am=node.querySelector("[data-am]");const pm=node.querySelector("[data-pm]");
-      am.id=key+"Am"; pm.id=key+"Pm"; am.appendChild(optTpl.content.cloneNode(true)); pm.appendChild(optTpl.content.cloneNode(true));
-      cont.appendChild(node);
-    });
-  }
-  function startOfWeekMonday(date){const d=new Date(date);const day=d.getDay();const diff=(day===0?-6:1-day);d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d;}
-  function toInputDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');}
-  function renderDefaultWeek(){ if(!weekOf.value){ weekOf.value=toInputDate(startOfWeekMonday(new Date())); } }
-  function load(){ try{return JSON.parse(localStorage.getItem(KEY)||"[]");}catch{return[]} }
-  function save(all){ localStorage.setItem(KEY, JSON.stringify(all)); }
-  function genId(){ return (crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)); }
-  function fmtAddr(r){ const l2=r.street2?(", "+r.street2):""; return `${r.street}${l2}, ${r.city}, ${r.state} ${r.zip}`; }
-  function getWeekVal(w,day,ap){ if(!w) return ""; const c=[day+ap, day+ap.toUpperCase(), day+ap.toLowerCase(), day[0].toUpperCase()+day.slice(1)+ap, day.toUpperCase()+ap, day+"_"+ap, day+"-"+ap]; for(const k of c){ if(Object.prototype.hasOwnProperty.call(w,k)){ const v=w[k]; return v==null?"":String(v).trim(); } } return ""; }
-  function normalizeShort(v){ if(!v) return ""; return String(v).replace(/NS \(no show\)/gi,"NS").replace(/Car Rider/gi,"Car").replace(/No School/gi,"Closed").trim(); }
+  <script>
+  (function(){
+    try{
+      const KEY = "student_rider_records_v1";
 
-  buildDays(); renderDefaultWeek();
+      const form = document.getElementById("riderForm");
+      const emptyState = document.getElementById("emptyState");
+      const weekOfInput = document.getElementById("weekOf");
+      const recordIdInput = document.getElementById("recordId");
+      const studentPicker = document.getElementById("studentPicker");
+      const weekPicker = document.getElementById("weekPicker");
+      const qpEdit = document.getElementById("qpEdit");
+      const qpPdf = document.getElementById("qpPdf");
+      const qpDup = document.getElementById("qpDup");
+      const btnHelp = document.getElementById("btnHelp");
+      const btnExport = document.getElementById("btnExport");
+      const btnImport = document.getElementById("btnImport");
+      const importFile = document.getElementById("importFile");
+      const btnNew = document.getElementById("btnNew");
+      const weekLeft = document.getElementById("weekLeft");
+      const weekRight = document.getElementById("weekRight");
 
-  form.addEventListener("submit",(e)=>{
-    e.preventDefault();
-    const w={monAm:monAm.value,monPm:monPm.value,tueAm:tueAm.value,tuePm:tuePm.value,wedAm:wedAm.value,wedPm:wedPm.value,thuAm:thuAm.value,thuPm:thuPm.value,friAm:friAm.value,friPm:friPm.value};
-    const d={
-      id:recordId.value||"", weekOf:weekOf.value, studentName:studentName.value.trim(),
-      street:street.value.trim(), street2:street2.value.trim(), city:city.value.trim(), state:state.value.trim(), zip:zip.value.trim(),
-      homeDistrict:homeDistrict.value.trim(), schoolName:schoolName.value.trim(), schoolDistrict:schoolDistrict.value.trim(),
-      week:w, savedAt:new Date().toISOString()
-    };
-    const all=load();
-    const original=all.find(r=>r.id===d.id);
-    if(original && (original.studentName!==d.studentName || original.weekOf!==d.weekOf)){ d.id=""; }
-    const rec={...d, id:d.id||genId()};
-    const idx=all.findIndex(r=>r.id===rec.id);
-    if(idx>=0) all[idx]=rec; else all.unshift(rec);
-    save(all); render(); recordId.value=rec.id; alert("Saved.");
-  });
+      const streetInput = document.getElementById("street");
+      const street2Input = document.getElementById("street2");
+      const cityInput = document.getElementById("city");
+      const stateInput = document.getElementById("state");
+      const zipInput = document.getElementById("zip");
+      const homeDistrictInput = document.getElementById("homeDistrict");
+      const schoolNameInput = document.getElementById("schoolName");
+      const schoolDistrictInput = document.getElementById("schoolDistrict");
 
-  function enterEdit(r){
-    recordId.value=r.id; weekOf.value=r.weekOf||""; studentName.value=r.studentName||"";
-    street.value=r.street||""; street2.value=r.street2||""; city.value=r.city||""; state.value=r.state||""; zip.value=r.zip||"";
-    homeDistrict.value=r.homeDistrict||""; schoolName.value=r.schoolName||""; schoolDistrict.value=r.schoolDistrict||"";
-    const w=r.week||{}; monAm.value=getWeekVal(w,'mon','Am'); monPm.value=getWeekVal(w,'mon','Pm'); tueAm.value=getWeekVal(w,'tue','Am'); tuePm.value=getWeekVal(w,'tue','Pm');
-    wedAm.value=getWeekVal(w,'wed','Am'); wedPm.value=getWeekVal(w,'wed','Pm'); thuAm.value=getWeekVal(w,'thu','Am'); thuPm.value=getWeekVal(w,'thu','Pm');
-    friAm.value=getWeekVal(w,'fri','Am'); friPm.value=getWeekVal(w,'fri','Pm');
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  function duplicateToNextWeek(r){
-    const base=r.weekOf?new Date(r.weekOf):new Date(); const s=new Date(base); s.setDate(s.getDate()-s.getDay()); s.setDate(s.getDate()+7);
-    const weekOf=toInputDate(s);
-    const nw={...r, id:genId(), weekOf, week:{monAm:"",monPm:"",tueAm:"",tuePm:"",wedAm:"",wedPm:"",thuAm:"",thuPm:"",friAm:"",friPm:""}, savedAt:new Date().toISOString()};
-    const all=load(); all.unshift(nw); save(all); render(); enterEdit(nw);
-  }
+      const days = [
+        { key: "mon", label: "Monday" },
+        { key: "tue", label: "Tuesday" },
+        { key: "wed", label: "Wednesday" },
+        { key: "thu", label: "Thursday" },
+        { key: "fri", label: "Friday" }
+      ];
 
-  function render(){
-    const rows=load(); empty.style.display=rows.length?"none":"block"; tbody.innerHTML="";
-    populateQuick(rows);
-    rows.forEach(r=>{
-      const tr=document.createElement('tr');
-      const tda=document.createElement('td'); const actions=document.createElement('div'); actions.className='actions';
-      const bE=document.createElement('button'); bE.className='btn secondary'; bE.textContent='Edit'; bE.onclick=()=>enterEdit(r);
-      const bD=document.createElement('button'); bD.className='btn success'; bD.textContent='Duplicate → New Week'; bD.onclick=()=>duplicateToNextWeek(r);
-      const bP=document.createElement('button'); bP.className='btn'; bP.textContent='PDF'; bP.onclick=()=>printWeeks([r]);
-      const bX=document.createElement('button'); bX.className='btn danger'; bX.textContent='Delete'; bX.onclick=()=>{ if(confirm('Confirm delete?')){ const all=load().filter(x=>x.id!==r.id); save(all); render(); } };
-      [bE,bD,bP,bX].forEach(b=>actions.appendChild(b)); tda.appendChild(actions); tr.appendChild(tda);
-      const addr=fmtAddr(r);
-      const w=r.week||{};
-      const cells=[r.weekOf?new Date(r.weekOf).toLocaleDateString():"", r.studentName||"", addr, r.homeDistrict||"", r.schoolName||"", r.schoolDistrict||"",
-        getWeekVal(w,'mon','Am'),getWeekVal(w,'mon','Pm'),getWeekVal(w,'tue','Am'),getWeekVal(w,'tue','Pm'),getWeekVal(w,'wed','Am'),getWeekVal(w,'wed','Pm'),
-        getWeekVal(w,'thu','Am'),getWeekVal(w,'thu','Pm'),getWeekVal(w,'fri','Am'),getWeekVal(w,'fri','Pm'), new Date(r.savedAt).toLocaleString()];
-      cells.forEach(v=>{const td=document.createElement('td'); td.textContent=v; tr.appendChild(td);});
-      tbody.appendChild(tr);
-    });
-  }
-  function populateQuick(rows){
-    const students=[...new Set(rows.map(r=>r.studentName).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-    studentPicker.innerHTML="<option value=''>— Select student —</option>"+students.map(s=>`<option>${s}</option>`).join("");
-    weekPicker.innerHTML="<option value=''>— Select week —</option>";
-  }
-  studentPicker.addEventListener("change",(e)=>{
-    const s=e.target.value; const rows=load().filter(r=>r.studentName===s); const weeks=[...new Set(rows.map(r=>r.weekOf).filter(Boolean))].sort((a,b)=>a>b?-1:1);
-    weekPicker.innerHTML="<option value=''>— Select week —</option>"+weeks.map(w=>`<option value='${w}'>${new Date(w).toLocaleDateString()}</option>`).join("");
-  });
-  function getSelected(){ const s=studentPicker.value, w=weekPicker.value; if(!s||!w) return null; const rows=load().filter(r=>r.studentName===s&&r.weekOf===w); if(!rows.length) return null; rows.sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt)); return rows[0]; }
-  qpEdit.onclick=()=>{ const r=getSelected(); if(!r) return alert("Pick a student and week."); enterEdit(r); };
-  qpPdf.onclick=()=>{ const r=getSelected(); if(!r) return alert("Pick a student and week."); printWeeks([r]); };
-  qpDup.onclick=()=>{ const r=getSelected(); if(!r) return alert("Pick a student and week."); duplicateToNextWeek(r); };
+      function buildDayCards(){
+        const container = document.getElementById("daysContainer");
+        const dayTpl = document.getElementById("dayTemplate");
+        const optTpl = document.getElementById("optionTemplate");
+        container.innerHTML = "";
+        days.forEach(({key,label})=>{
+          const node = dayTpl.content.firstElementChild.cloneNode(true);
+          node.querySelector("[data-day-label]").textContent = label;
+          const amSel = node.querySelector("[data-am]");
+          const pmSel = node.querySelector("[data-pm]");
+          amSel.id = key+"Am"; amSel.name = key+"Am";
+          pmSel.id = key+"Pm"; pmSel.name = key+"Pm";
+          amSel.appendChild(optTpl.content.cloneNode(true));
+          pmSel.appendChild(optTpl.content.cloneNode(true));
+          container.appendChild(node);
+        });
+      }
+      buildDayCards();
 
-  const printArea=document.getElementById("printArea");
-  function cell(t){const td=document.createElement('td'); td.textContent=t||"—"; return td;}
-  function makeCard(r){
-    const sec=document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
-    const h=document.createElement('div'); h.style.display="flex"; h.style.justifyContent="space-between"; h.style.marginBottom="6px";
-    const t=document.createElement('div'); t.style.fontWeight="800"; t.textContent="Student Rider Log — Weekly Report";
-    const m=document.createElement('div'); m.style.fontSize="12px"; m.textContent="Saved: "+new Date(r.savedAt||Date.now()).toLocaleString();
-    h.appendChild(t); h.appendChild(m); sec.appendChild(h);
-    const info=document.createElement('div'); info.textContent=`Week of ${r.weekOf?new Date(r.weekOf).toLocaleDateString():""}  •  Student ${r.studentName||""}  •  Address ${fmtAddr(r)}`; info.style.fontSize="12px"; sec.appendChild(info);
-    const table=document.createElement('table'); table.style.width="100%"; table.style.borderCollapse="collapse"; table.style.marginTop="6px";
-    const thead=document.createElement('thead'); const trh=document.createElement('tr'); ["Day","AM","PM"].forEach(x=>{const th=document.createElement('th'); th.textContent=x; th.style.borderBottom="1px solid #bbb"; th.style.textAlign="left"; th.style.padding="6px"; trh.appendChild(th);}); thead.appendChild(trh); table.appendChild(thead);
-    const tb=document.createElement('tbody');
-    const w=r.week||{};
-    const rows=[["Monday",getWeekVal(w,'mon','Am'),getWeekVal(w,'mon','Pm')],["Tuesday",getWeekVal(w,'tue','Am'),getWeekVal(w,'tue','Pm')],["Wednesday",getWeekVal(w,'wed','Am'),getWeekVal(w,'wed','Pm')],["Thursday",getWeekVal(w,'thu','Am'),getWeekVal(w,'thu','Pm')],["Friday",getWeekVal(w,'fri','Am'),getWeekVal(w,'fri','Pm')]];
-    rows.forEach(row=>{const tr=document.createElement('tr'); tr.appendChild(cell(row[0])); tr.appendChild(cell(row[1])); tr.appendChild(cell(row[2])); tb.appendChild(tr);});
-    table.appendChild(tb); sec.appendChild(table); return sec;
-  }
-  function printWeeks(recs){ if(!recs||!recs.length) return alert("Nothing to print."); printArea.innerHTML=""; recs.forEach((r,i)=>{ printArea.appendChild(makeCard(r)); if(i<recs.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br);} }); setTimeout(()=>window.print(),10); }
-  render();
-})();</script>
-</body></html>
+      function startOfWeekMonday(date){
+        const d = new Date(date); const day = d.getDay(); const diff = (day===0?-6:1-day); d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d;
+      }
+      function toInputDate(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+      function renderDefaultWeekOf(){ if(!weekOfInput.value){ weekOfInput.value = toInputDate(startOfWeekMonday(new Date())); } }
+      renderDefaultWeekOf();
+
+      function getDayDatesFromWeekOf(weekOfStr){
+        if(!weekOfStr) return {};
+        const mon = startOfWeekMonday(new Date(weekOfStr));
+        const fmt = d => toInputDate(d);
+        const dates = {};
+        ["mon","tue","wed","thu","fri"].forEach((k,i)=>{
+          const d = new Date(mon); d.setDate(mon.getDate()+i); dates[k] = fmt(d);
+        });
+        return dates;
+      }
+      function formatNice(dstr){
+        if(!dstr) return "";
+        const d = new Date(dstr);
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      }
+      function updateDayLabels(){
+        const week = weekOfInput.value;
+        const d = getDayDatesFromWeekOf(week);
+        days.forEach(({key,label})=>{
+          const card = document.getElementById(key+"Am").closest(".dayCard");
+          const header = card.querySelector("[data-day-label]");
+          header.textContent = `${label} (${formatNice(d[key])})`;
+        });
+      }
+      weekOfInput.addEventListener("change", updateDayLabels);
+      updateDayLabels();
+
+      function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || "[]"); }catch{ return []; } }
+      function save(all){ localStorage.setItem(KEY, JSON.stringify(all)); }
+      function genId(){ return (crypto?.randomUUID? crypto.randomUUID(): (Date.now().toString(36)+Math.random().toString(36).slice(2))); }
+
+      function fmtAddress(r){
+        const l2 = r.street2 ? (", " + r.street2) : "";
+        return `${r.street}${l2}, ${r.city}, ${r.state} ${r.zip}`;
+      }
+
+      function getWeekVal(w, day, ap){
+        if(!w) return "";
+        const keys = [ day+ap, day+ap.toUpperCase(), day+ap.toLowerCase(), day.charAt(0).toUpperCase()+day.slice(1)+ap, day.toUpperCase()+ap, day+"_"+ap, day+"-"+ap ];
+        for(const k of keys){
+          if(Object.prototype.hasOwnProperty.call(w,k)){
+            const v = w[k];
+            return (v==null? "": String(v).trim());
+          }
+        }
+        return "";
+      }
+
+      function normalizeShort(v){
+        if(!v) return "";
+        return String(v).replace(/NS \(no show\)/gi, "NS").replace(/Car Rider/gi,"Car").replace(/No School/gi,"Closed").trim();
+      }
+
+      btnNew?.addEventListener("click", ()=>{
+        form.reset();
+        recordIdInput.value = "";
+        renderDefaultWeekOf();
+        updateDayLabels();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      form.addEventListener("submit", (ev)=>{
+        ev.preventDefault();
+        const week = {
+          monAm: document.getElementById("monAm").value,
+          monPm: document.getElementById("monPm").value,
+          tueAm: document.getElementById("tueAm").value,
+          tuePm: document.getElementById("tuePm").value,
+          wedAm: document.getElementById("wedAm").value,
+          wedPm: document.getElementById("wedPm").value,
+          thuAm: document.getElementById("thuAm").value,
+          thuPm: document.getElementById("thuPm").value,
+          friAm: document.getElementById("friAm").value,
+          friPm: document.getElementById("friPm").value
+        };
+        const draft = {
+          id: recordIdInput.value || "",
+          weekOf: document.getElementById("weekOf").value,
+          studentName: document.getElementById("studentName").value.trim(),
+          street: document.getElementById("street").value.trim(),
+          street2: document.getElementById("street2").value.trim(),
+          city: document.getElementById("city").value.trim(),
+          state: document.getElementById("state").value.trim(),
+          zip: document.getElementById("zip").value.trim(),
+          homeDistrict: document.getElementById("homeDistrict").value.trim(),
+          schoolName: document.getElementById("schoolName").value.trim(),
+          schoolDistrict: document.getElementById("schoolDistrict").value.trim(),
+          week,
+          savedAt: new Date().toISOString()
+        };
+
+        const all = load();
+        const original = all.find(r => r.id === draft.id);
+        if (original && (original.studentName !== draft.studentName || original.weekOf !== draft.weekOf)) {
+          draft.id = "";
+        }
+        const rec = { ...draft, id: draft.id || genId() };
+
+        const idx = all.findIndex(r=> r.id===rec.id);
+        if(idx>=0){ all[idx]=rec; } else { all.unshift(rec); }
+        save(all);
+        render();
+        recordIdInput.value = rec.id;
+        alert("Saved. You can keep filling the week, or start a New entry for another student.");
+      });
+
+      function populateQuickPicker(rows){
+        const students = Array.from(new Set(rows.map(r=>r.studentName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+        studentPicker.innerHTML = "";
+        const sOpt = document.createElement("option"); sOpt.value=""; sOpt.textContent="— Select student —"; studentPicker.appendChild(sOpt);
+        students.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; studentPicker.appendChild(o); });
+        weekPicker.innerHTML = "";
+        const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
+      }
+      function populateWeeksForStudent(student){
+        const rows = load().filter(r=> r.studentName === student);
+        const weeks = Array.from(new Set(rows.map(r=>r.weekOf).filter(Boolean))).sort((a,b)=> (a>b?-1:1));
+        weekPicker.innerHTML = "";
+        const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt);
+        weeks.forEach(wk=>{
+          const o=document.createElement("option");
+          const d = new Date(wk);
+          o.value = wk;
+          o.textContent = d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+          weekPicker.appendChild(o);
+        });
+      }
+      studentPicker.addEventListener("change", (e)=>{
+        const s = e.target.value;
+        if(s) populateWeeksForStudent(s);
+        else { weekPicker.innerHTML = ""; const wOpt = document.createElement("option"); wOpt.value=""; wOpt.textContent="— Select week —"; weekPicker.appendChild(wOpt); }
+      });
+      function getSelectedRecord(){
+        const s = studentPicker.value; const w = weekPicker.value;
+        if(!s || !w) return null;
+        const rows = load().filter(r=> r.studentName === s && r.weekOf === w);
+        if(!rows.length) return null;
+        rows.sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt));
+        return rows[0];
+      }
+      qpEdit?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); enterEditMode(r); });
+      qpPdf?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); printRecords([r]); });
+      qpDup?.addEventListener("click", ()=>{ const r=getSelectedRecord(); if(!r) return alert("Pick a student and week."); duplicateToNextWeek(r); });
+
+      const printArea = document.getElementById("printArea");
+      function cell(txt){ const td=document.createElement('td'); td.textContent = normalizeShort(txt)||"—"; return td; }
+      function makeReportCard(r){
+        const sec = document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px 12px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
+        const head = document.createElement('div'); head.style.display="flex"; head.style.justifyContent="space-between"; head.style.alignItems="flex-start"; head.style.gap="10px"; head.style.marginBottom="6px";
+        const h1 = document.createElement('div'); h1.style.fontWeight="800"; h1.textContent='Student Rider Log — Weekly Report';
+        const meta = document.createElement('div'); meta.style.fontSize="11px"; meta.style.color="#333"; meta.textContent='Saved: ' + new Date(r.savedAt||Date.now()).toLocaleString();
+        head.appendChild(h1); head.appendChild(meta); sec.appendChild(head);
+
+        const info = document.createElement('div'); info.style.fontSize="12px"; info.style.marginBottom="6px";
+        info.textContent = `Week of ${r.weekOf? new Date(r.weekOf).toLocaleDateString(): ""} • Student ${r.studentName||""} • Address ${fmtAddress(r)}`;
+        sec.appendChild(info);
+
+        const table = document.createElement('table'); table.style.width="100%"; table.style.borderCollapse="collapse";
+        const thead = document.createElement('thead'); const trh=document.createElement('tr');
+        ['Day','AM','PM'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; th.style.borderBottom="1px solid #bbb"; th.style.padding="6px 8px"; th.style.textAlign="left"; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+
+        const tb = document.createElement('tbody');
+        const w=r.week||{};
+        const d = getDayDatesFromWeekOf(r.weekOf);
+        [
+          [`Monday (${(d.mon? new Date(d.mon).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'mon','Am'), getWeekVal(w,'mon','Pm')],
+          [`Tuesday (${(d.tue? new Date(d.tue).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm')],
+          [`Wednesday (${(d.wed? new Date(d.wed).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'wed','Am'), getWeekVal(w,'wed','Pm')],
+          [`Thursday (${(d.thu? new Date(d.thu).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'thu','Am'), getWeekVal(w,'thu','Pm')],
+          [`Friday (${(d.fri? new Date(d.fri).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'fri','Am'), getWeekVal(w,'fri','Pm')],
+        ].forEach(row=>{ const tr=document.createElement('tr'); ['6px 8px','6px 8px','6px 8px'].forEach((pad,i)=>{ const td=cell(row[i]); td.style.padding=pad; if(i>0) td.style.width='32%'; tr.appendChild(td); }); tb.appendChild(tr); });
+        table.appendChild(tb); sec.appendChild(table); return sec;
+      }
+      function printRecords(records){
+        if(!records || !records.length){ alert("Nothing to print."); return; }
+        printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeReportCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
+        setTimeout(()=>window.print(), 10);
+      }
+
+      function enterEditMode(r){
+        recordIdInput.value = r.id;
+        document.getElementById("weekOf").value = r.weekOf || "";
+        document.getElementById("studentName").value = r.studentName || "";
+        streetInput.value = r.street || "";
+        street2Input.value = r.street2 || "";
+        cityInput.value = r.city || "";
+        stateInput.value = r.state || "";
+        zipInput.value = r.zip || "";
+        homeDistrictInput.value = r.homeDistrict || "";
+        schoolNameInput.value = r.schoolName || "";
+        schoolDistrictInput.value = r.schoolDistrict || "";
+        const w = r.week || {};
+        document.getElementById("monAm").value = getWeekVal(w,'mon','Am');
+        document.getElementById("monPm").value = getWeekVal(w,'mon','Pm');
+        document.getElementById("tueAm").value = getWeekVal(w,'tue','Am');
+        document.getElementById("tuePm").value = getWeekVal(w,'tue','Pm');
+        document.getElementById("wedAm").value = getWeekVal(w,'wed','Am');
+        document.getElementById("wedPm").value = getWeekVal(w,'wed','Pm');
+        document.getElementById("thuAm").value = getWeekVal(w,'thu','Am');
+        document.getElementById("thuPm").value = getWeekVal(w,'thu','Pm');
+        document.getElementById("friAm").value = getWeekVal(w,'fri','Am');
+        document.getElementById("friPm").value = getWeekVal(w,'fri','Pm');
+        updateDayLabels();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function duplicateToNextWeek(r){
+        const base = r.weekOf ? new Date(r.weekOf) : new Date();
+        const s = new Date(base); s.setDate(s.getDate() - s.getDay()); s.setDate(s.getDate()+7);
+        const weekOf = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
+        const blankWeek = { monAm:"",monPm:"",tueAm:"",tuePm:"",wedAm:"",wedPm:"",thuAm:"",thuPm:"",friAm:"",friPm:"" };
+        const newRec = { ...r, id: genId(), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
+        const all = load(); all.unshift(newRec); save(all); enterEditMode(newRec);
+      }
+      function render(){
+        const rows = load();
+        const has = rows.length>0;
+        document.getElementById("emptyState").style.display = has? "none" : "block";
+        populateQuickPicker(rows);
+      }
+
+      // Export/Import + Help
+      function download(filename, text){
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], {type:'application/json'}));
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
+      }
+      function exportAll(){
+        const data = { exportedAt: new Date().toISOString(), records: load() };
+        const ts = new Date().toISOString().replace(/[-:]/g,'').slice(0,15);
+        download(`student_rider_backup_${ts}.json`, JSON.stringify(data, null, 2));
+      }
+      function importMerge(json){
+        let incoming = [];
+        try{
+          const obj = JSON.parse(json);
+          incoming = Array.isArray(obj) ? obj : (obj.records || []);
+        }catch(e){
+          alert("Invalid JSON file."); return;
+        }
+        const existing = load();
+        const byId = new Map(existing.map(r=>[r.id, r]));
+        for(const rec of incoming){
+          if(!rec || !rec.id) continue;
+          const old = byId.get(rec.id);
+          const newer = (!old || (new Date(rec.savedAt||0) > new Date(old.savedAt||0))) ? rec : old;
+          byId.set(rec.id, newer);
+        }
+        const merged = Array.from(byId.values()).sort((a,b)=> new Date(b.savedAt)-new Date(a.savedAt));
+        localStorage.setItem(KEY, JSON.stringify(merged));
+        render();
+        alert(`Import complete. Total entries: ${merged.length}.`);
+      }
+      btnExport?.addEventListener("click", exportAll);
+      btnImport?.addEventListener("click", ()=> importFile.click());
+      importFile?.addEventListener("change", (e)=>{
+        const f = e.target.files && e.target.files[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => importMerge(ev.target.result);
+        reader.readAsText(f);
+        importFile.value = "";
+      });
+      btnHelp?.addEventListener("click", ()=>{
+        const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=800");
+        if(!w){ alert("Pop-up blocked. Please allow pop-ups for this page to view Help."); return; }
+        w.document.write("<!doctype html><html><head><meta charset='utf-8'><title>Help</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.5;padding:20px;max-width:900px;margin:0 auto}h1{font-size:22px;margin:0 0 12px}h2{font-size:18px;margin:18px 0 8px;border-bottom:1px solid #eee;padding-bottom:4px}ol,ul{padding-left:20px}.kbd{font-family:ui-monospace,monospace;background:#f3f3f3;border-radius:6px;padding:1px 6px}</style></head><body><h1>Help & Tips</h1><h2>Mobile scrolling</h2><p>Swipe sideways on the day cards, or tap the ◀ ▶ buttons to scroll through Monday–Friday.</p><h2>Saving entries</h2><p>Tap <span class='kbd'>Save entry</span>. Use <span class='kbd'>New entry</span> to start another student.</p><h2>Export & Import</h2><p>Use <span class='kbd'>Export</span> to download a backup. Use <span class='kbd'>Import…</span> to merge on a new device.</p></body></html>");
+        w.document.close();
+      });
+
+      // Drag-to-scroll + arrow buttons for week grid
+      const scroller = document.querySelector('.week-grid');
+      if (scroller) {
+        let isDown = false, startX = 0, startScrollLeft = 0;
+        scroller.addEventListener('pointerdown', (e)=>{
+          isDown = true; startX = e.clientX; startScrollLeft = scroller.scrollLeft;
+          scroller.setPointerCapture(e.pointerId); scroller.style.cursor = 'grabbing';
+        });
+        scroller.addEventListener('pointermove', (e)=>{ if(!isDown) return; const dx = e.clientX - startX; scroller.scrollLeft = startScrollLeft - dx; });
+        ['pointerup','pointercancel','pointerleave'].forEach(type=> scroller.addEventListener(type, ()=>{ isDown=false; scroller.style.cursor=''; }));
+        function jump(dir){ scroller.scrollBy({ left: dir * Math.max(220, scroller.clientWidth*0.9), behavior: 'smooth' }); }
+        weekLeft?.addEventListener('click', ()=>jump(-1));
+        weekRight?.addEventListener('click', ()=>jump(1));
+      }
+
+      function enterEditMode(r){
+        recordIdInput.value = r.id;
+        document.getElementById("weekOf").value = r.weekOf || "";
+        document.getElementById("studentName").value = r.studentName || "";
+        streetInput.value = r.street || "";
+        street2Input.value = r.street2 || "";
+        cityInput.value = r.city || "";
+        stateInput.value = r.state || "";
+        zipInput.value = r.zip || "";
+        homeDistrictInput.value = r.homeDistrict || "";
+        schoolNameInput.value = r.schoolName || "";
+        schoolDistrictInput.value = r.schoolDistrict || "";
+        const w = r.week || {};
+        document.getElementById("monAm").value = getWeekVal(w,'mon','Am');
+        document.getElementById("monPm").value = getWeekVal(w,'mon','Pm');
+        document.getElementById("tueAm").value = getWeekVal(w,'tue','Am');
+        document.getElementById("tuePm").value = getWeekVal(w,'tue','Pm');
+        document.getElementById("wedAm").value = getWeekVal(w,'wed','Am');
+        document.getElementById("wedPm").value = getWeekVal(w,'wed','Pm');
+        document.getElementById("thuAm").value = getWeekVal(w,'thu','Am');
+        document.getElementById("thuPm").value = getWeekVal(w,'thu','Pm');
+        document.getElementById("friAm").value = getWeekVal(w,'fri','Am');
+        document.getElementById("friPm").value = getWeekVal(w,'fri','Pm');
+        updateDayLabels();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function duplicateToNextWeek(r){
+        const base = r.weekOf ? new Date(r.weekOf) : new Date();
+        const s = new Date(base); s.setDate(s.getDate() - s.getDay()); s.setDate(s.getDate()+7);
+        const weekOf = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
+        const blankWeek = { monAm:"",monPm:"",tueAm:"",tuePm:"",wedAm:"",wedPm:"",thuAm:"",thuPm:"",friAm:"",friPm:"" };
+        const newRec = { ...r, id: genId(), weekOf, week: blankWeek, savedAt: new Date().toISOString() };
+        const all = load(); all.unshift(newRec); save(all); enterEditMode(newRec);
+      }
+
+      function printRecords(records){
+        if(!records || !records.length){ alert("Nothing to print."); return; }
+        const printArea = document.getElementById("printArea");
+        function cell(txt){ const td=document.createElement('td'); td.textContent = normalizeShort(txt)||"—"; return td; }
+        function makeReportCard(r){
+          const sec = document.createElement('section'); sec.style.background="#fff"; sec.style.color="#000"; sec.style.padding="10px 12px"; sec.style.margin="6px 0"; sec.style.border="1px solid #999"; sec.style.borderRadius="10px";
+          const head = document.createElement('div'); head.style.display="flex"; head.style.justifyContent="space-between"; head.style.alignItems="flex-start"; head.style.gap="10px"; head.style.marginBottom="6px";
+          const h1 = document.createElement('div'); h1.style.fontWeight="800"; h1.textContent='Student Rider Log — Weekly Report';
+          const meta = document.createElement('div'); meta.style.fontSize="11px"; meta.style.color="#333"; meta.textContent='Saved: ' + new Date(r.savedAt||Date.now()).toLocaleString();
+          head.appendChild(h1); head.appendChild(meta); sec.appendChild(head);
+          const info = document.createElement('div'); info.style.fontSize="12px"; info.style.marginBottom="6px";
+          info.textContent = `Week of ${r.weekOf? new Date(r.weekOf).toLocaleDateString(): ""} • Student ${r.studentName||""} • Address ${fmtAddress(r)}`; sec.appendChild(info);
+          const table = document.createElement('table'); table.style.width="100%"; table.style.borderCollapse="collapse";
+          const thead = document.createElement('thead'); const trh=document.createElement('tr');
+          ['Day','AM','PM'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; th.style.borderBottom="1px solid #bbb"; th.style.padding="6px 8px"; th.style.textAlign="left"; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+          const tb = document.createElement('tbody');
+          const w=r.week||{}; const d = getDayDatesFromWeekOf(r.weekOf);
+          [
+            [`Monday (${(d.mon? new Date(d.mon).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'mon','Am'), getWeekVal(w,'mon','Pm')],
+            [`Tuesday (${(d.tue? new Date(d.tue).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'tue','Am'), getWeekVal(w,'tue','Pm')],
+            [`Wednesday (${(d.wed? new Date(d.wed).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'wed','Am'), getWeekVal(w,'wed','Pm')],
+            [`Thursday (${(d.thu? new Date(d.thu).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'thu','Am'), getWeekVal(w,'thu','Pm')],
+            [`Friday (${(d.fri? new Date(d.fri).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'')})`, getWeekVal(w,'fri','Am'), getWeekVal(w,'fri','Pm')],
+          ].forEach(row=>{ const tr=document.createElement('tr'); ['6px 8px','6px 8px','6px 8px'].forEach((pad,i)=>{ const td=cell(row[i]); td.style.padding=pad; if(i>0) td.style.width='32%'; tr.appendChild(td); }); tb.appendChild(tr); });
+          table.appendChild(tb); sec.appendChild(table); return sec;
+        }
+        printArea.innerHTML=""; records.forEach((r,i)=>{ printArea.appendChild(makeReportCard(r)); if(i<records.length-1){ const br=document.createElement('div'); br.style.pageBreakAfter='always'; printArea.appendChild(br); }});
+        setTimeout(()=>window.print(), 10);
+      }
+
+      // initial render
+      function render(){ const rows = load(); const has = rows.length>0; emptyState.style.display = has? "none" : "block"; populateQuickPicker(rows); }
+      render();
+
+    }catch(err){
+      alert("Initialization error: " + (err && err.message ? err.message : err));
+      console.error(err);
+    }
+  })();
+  </script>
+</body>
+</html>
